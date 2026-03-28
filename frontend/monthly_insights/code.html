@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#131313",
+              "on-primary": "#053900",
+              "on-secondary-fixed-variant": "#095300",
+              "on-primary-fixed": "#022100",
+              "error-container": "#93000a",
+              "inverse-surface": "#e5e2e1",
+              "tertiary-container": "#ffd3ce",
+              "primary-fixed-dim": "#2ae500",
+              "secondary-fixed": "#8dfc71",
+              "tertiary-fixed-dim": "#e7bdb8",
+              "tertiary-fixed": "#ffdad6",
+              "surface-container-low": "#1c1b1b",
+              "secondary": "#72de58",
+              "on-secondary-fixed": "#022100",
+              "on-error": "#690005",
+              "on-surface-variant": "#baccb0",
+              "on-primary-fixed-variant": "#095300",
+              "on-error-container": "#ffdad6",
+              "primary-fixed": "#79ff5b",
+              "surface-bright": "#3a3939",
+              "on-primary-container": "#107100",
+              "surface-tint": "#2ae500",
+              "inverse-primary": "#106e00",
+              "on-tertiary-container": "#7a5955",
+              "outline": "#85967c",
+              "outline-variant": "#3c4b35",
+              "inverse-on-surface": "#313030",
+              "tertiary": "#fff8f7",
+              "secondary-fixed-dim": "#72de58",
+              "surface-container-high": "#2a2a2a",
+              "surface-variant": "#353534",
+              "surface-container": "#201f1f",
+              "on-secondary-container": "#043200",
+              "on-background": "#e5e2e1",
+              "surface-container-lowest": "#0e0e0e",
+              "on-surface": "#e5e2e1",
+              "on-tertiary-fixed": "#2c1513",
+              "secondary-container": "#3aa625",
+              "surface-dim": "#131313",
+              "background": "#131313",
+              "on-tertiary-fixed-variant": "#5d3f3c",
+              "error": "#ffb4ab",
+              "primary": "#efffe3",
+              "primary-container": "#39ff14",
+              "surface-container-highest": "#353534",
+              "on-secondary": "#053900",
+              "on-tertiary": "#442927"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(53, 53, 52, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .neon-glow {
+        box-shadow: 0 0 15px rgba(57, 255, 20, 0.15);
+      }
+      .chart-gradient {
+        background: linear-gradient(180deg, rgba(121, 255, 91, 0.15) 0%, rgba(121, 255, 91, 0) 100%);
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Desktop) -->
+<aside class="fixed left-0 top-0 h-full z-50 flex flex-col bg-[#131313] dark:bg-[#131313] h-screen w-20 md:w-64 border-r border-transparent">
+<div class="p-8">
+<h1 class="text-xl font-bold tracking-tight text-[#EFFFE3] dark:text-[#EFFFE3]">Kinetic Ledger</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant mt-1">Premium Finance</p>
+</div>
+<nav class="flex-1 space-y-2 px-2">
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="hidden md:block font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="hidden md:block font-medium">Daily Entry</span>
+</a>
+<!-- Active State for Insights -->
+<a class="flex items-center gap-4 bg-[#2A2A2A] text-[#39FF14] rounded-lg px-4 py-3 mx-2 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="hidden md:block font-medium">Insights</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="hidden md:block font-medium">Yearly</span>
+</a>
+</nav>
+<div class="mt-auto p-4 border-t border-outline-variant/10 space-y-1">
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="hidden md:block">Settings</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="hidden md:block">Support</span>
+</a>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-full md:left-64 md:w-[calc(100%-16rem)] z-40 flex justify-between items-center px-8 h-20 bg-[#131313]/80 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<h2 class="text-2xl font-black text-[#39FF14] italic">Monthly Insights</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-lowest border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-primary-fixed-dim w-64" placeholder="Search data..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface hover:opacity-80 transition-opacity">notifications</button>
+<button class="material-symbols-outlined text-on-surface hover:opacity-80 transition-opacity">account_balance_wallet</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User profile" data-alt="Close-up portrait of a professional male user in high-tech minimalist office environment with subtle neon lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuGp0MPqEXrGRG8rL2kL_BeeXbLSuUPlwFAkl5zmbsg5PG7lSLMH-bdFeW0yAYOEpsmq7xEKber7yzpDfcGywwdWsa93Zf2L7ErEiusqTaiELDf2dV1FFMtfX4ag7LmpzelrjUcwmm8Pv9raOLR-Kl3fFXOiGr9T74XdnaA2fS4nlaYVyyVMjiRlIS9QUb93W4z7CIaUayU69XYWri0aafT38sLwILdgAPuyywuN6ypHAjHpnqQwT6NoIoZl_uanF7fZLnsPNdNHhI"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pt-24 pb-12 px-8 md:ml-64 min-h-screen">
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-7xl mx-auto">
+<!-- Summary Display -->
+<div class="md:col-span-8 flex flex-col justify-end p-8 bg-surface-container-low rounded-xl border border-outline-variant/5">
+<span class="label-sm text-on-surface-variant tracking-[0.2em] mb-2 uppercase font-label">Total Monthly Liquidity</span>
+<div class="flex items-baseline gap-4">
+<h3 class="font-headline text-5xl md:text-7xl font-bold tracking-tight text-primary">
+<span class="text-2xl md:text-4xl text-primary/40 font-medium">$</span>42,890.00
+                    </h3>
+<div class="flex items-center gap-1 text-secondary px-2 py-1 rounded-full bg-secondary-container/10 text-xs font-bold neon-glow">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                        12.4%
+                    </div>
+</div>
+</div>
+<!-- Quick Stats Bento -->
+<div class="md:col-span-4 grid grid-cols-2 gap-4">
+<div class="col-span-2 glass-card rounded-xl p-6 border border-outline-variant/10">
+<span class="label-sm text-on-surface-variant font-label uppercase">Efficiency Score</span>
+<div class="mt-4 h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[78%]"></div>
+</div>
+<div class="mt-2 flex justify-between text-xs text-primary/60 font-bold">
+<span>Optimized</span>
+<span>78%</span>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-xl p-5 border border-outline-variant/5">
+<span class="material-symbols-outlined text-primary mb-2">savings</span>
+<p class="text-xs text-on-surface-variant">Saved</p>
+<p class="text-lg font-bold text-on-surface">$3,400</p>
+</div>
+<div class="bg-surface-container-high rounded-xl p-5 border border-outline-variant/5">
+<span class="material-symbols-outlined text-error mb-2">payments</span>
+<p class="text-xs text-on-surface-variant">Burn</p>
+<p class="text-lg font-bold text-on-surface">$1,290</p>
+</div>
+</div>
+<!-- Main Interactive Chart Section -->
+<div class="md:col-span-12 glass-card rounded-xl border border-outline-variant/10 overflow-hidden">
+<div class="p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-outline-variant/5">
+<div>
+<h4 class="font-headline text-xl font-semibold">Spending Trajectory</h4>
+<p class="text-sm text-on-surface-variant">Visualizing outflow velocity across the current period</p>
+</div>
+<div class="flex bg-surface-container-lowest p-1 rounded-lg">
+<button class="px-4 py-1.5 rounded-md text-xs font-bold bg-primary-container text-on-primary">Line</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors">Area</button>
+<button class="px-4 py-1.5 rounded-md text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors">Delta</button>
+</div>
+</div>
+<div class="h-80 w-full p-8 relative">
+<!-- Faux Line Chart Visualization -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 200">
+<defs>
+<lineargradient id="chart-grad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#79ff5b" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#79ff5b" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,180 L100,160 L200,175 L300,140 L400,155 L500,110 L600,125 L700,80 L800,95 L900,40 L1000,60" fill="none" stroke="#79ff5b" stroke-linecap="round" stroke-width="3"></path>
+<path d="M0,180 L100,160 L200,175 L300,140 L400,155 L500,110 L600,125 L700,80 L800,95 L900,40 L1000,60 V200 H0 Z" fill="url(#chart-grad)"></path>
+<!-- Data Points -->
+<circle class="neon-glow" cx="500" cy="110" fill="#39ff14" r="5"></circle>
+<circle class="neon-glow" cx="900" cy="40" fill="#39ff14" r="5"></circle>
+</svg>
+<!-- Floating Data Tooltip -->
+<div class="absolute top-20 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-primary/20 px-3 py-2 rounded-lg shadow-2xl backdrop-blur-md">
+<p class="text-[10px] text-on-surface-variant font-label uppercase">Peak Velocity</p>
+<p class="text-sm font-bold text-primary">$4,120.50</p>
+</div>
+</div>
+<div class="px-8 pb-8 flex justify-between text-[10px] text-on-surface-variant font-label uppercase tracking-widest">
+<span>Oct 01</span>
+<span>Oct 08</span>
+<span>Oct 15</span>
+<span>Oct 22</span>
+<span>Oct 31</span>
+</div>
+</div>
+<!-- Asymmetric Goal Cards -->
+<div class="md:col-span-5 space-y-6">
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 relative overflow-hidden group">
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase">Target Goal</span>
+<span class="material-symbols-outlined text-primary/40 group-hover:text-primary transition-colors cursor-pointer">more_horiz</span>
+</div>
+<h5 class="text-xl font-bold mb-1">New Venture Fund</h5>
+<p class="text-sm text-on-surface-variant mb-6">Seed capital for Q1 project</p>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-xs text-on-surface-variant font-label uppercase">Progress</p>
+<p class="text-2xl font-bold text-primary">82%</p>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant font-label uppercase">Target</p>
+<p class="text-lg font-bold">$25,000</p>
+</div>
+</div>
+</div>
+<!-- Background Visual Element -->
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 border-l-4 border-secondary/40">
+<div class="flex gap-4 items-center">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">auto_graph</span>
+</div>
+<div>
+<h6 class="font-bold">Liquidity Optimization</h6>
+<p class="text-xs text-on-surface-variant">Recommended: Move $2,400 to High-Yield</p>
+</div>
+<button class="ml-auto material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">chevron_right</button>
+</div>
+</div>
+</div>
+<!-- Spending Breakdown / Filterable List -->
+<div class="md:col-span-7 bg-surface-container-low rounded-xl border border-outline-variant/5">
+<div class="p-6 flex justify-between items-center">
+<h5 class="font-headline font-bold">Category Allocation</h5>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container-highest text-on-surface hover:bg-primary-container hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container-highest text-on-surface hover:bg-primary-container hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<div class="px-6 pb-6 space-y-4">
+<!-- List Item -->
+<div class="group flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">shopping_cart</span>
+</div>
+<div>
+<p class="font-bold text-sm">Lifestyle &amp; Retail</p>
+<p class="text-xs text-on-surface-variant">24 Transactions</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold">$4,281.00</p>
+<p class="text-[10px] text-secondary font-bold">14.2% of total</p>
+</div>
+</div>
+<!-- List Item -->
+<div class="group flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">apartment</span>
+</div>
+<div>
+<p class="font-bold text-sm">Housing &amp; Fixed</p>
+<p class="text-xs text-on-surface-variant">3 Transactions</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold">$2,900.00</p>
+<p class="text-[10px] text-on-surface-variant font-bold">Fixed</p>
+</div>
+</div>
+<!-- List Item -->
+<div class="group flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-highest transition-all duration-300">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">restaurant</span>
+</div>
+<div>
+<p class="font-bold text-sm">Dining &amp; Spirits</p>
+<p class="text-xs text-on-surface-variant">18 Transactions</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold">$892.40</p>
+<p class="text-[10px] text-error font-bold">+2.1% from avg</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (Supressed based on context: Details/Insights screen) -->
+<!-- Not rendering FAB here as per instructions for Details/Insights pages -->
+</body></html>

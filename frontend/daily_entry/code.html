@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily Entry - Kinetic Ledger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#131313",
+              "on-primary": "#053900",
+              "on-secondary-fixed-variant": "#095300",
+              "on-primary-fixed": "#022100",
+              "error-container": "#93000a",
+              "inverse-surface": "#e5e2e1",
+              "tertiary-container": "#ffd3ce",
+              "primary-fixed-dim": "#2ae500",
+              "secondary-fixed": "#8dfc71",
+              "tertiary-fixed-dim": "#e7bdb8",
+              "tertiary-fixed": "#ffdad6",
+              "surface-container-low": "#1c1b1b",
+              "secondary": "#72de58",
+              "on-secondary-fixed": "#022100",
+              "on-error": "#690005",
+              "on-surface-variant": "#baccb0",
+              "on-primary-fixed-variant": "#095300",
+              "on-error-container": "#ffdad6",
+              "primary-fixed": "#79ff5b",
+              "surface-bright": "#3a3939",
+              "on-primary-container": "#107100",
+              "surface-tint": "#2ae500",
+              "inverse-primary": "#106e00",
+              "on-tertiary-container": "#7a5955",
+              "outline": "#85967c",
+              "outline-variant": "#3c4b35",
+              "inverse-on-surface": "#313030",
+              "tertiary": "#fff8f7",
+              "secondary-fixed-dim": "#72de58",
+              "surface-container-high": "#2a2a2a",
+              "surface-variant": "#353534",
+              "surface-container": "#201f1f",
+              "on-secondary-container": "#043200",
+              "on-background": "#e5e2e1",
+              "surface-container-lowest": "#0e0e0e",
+              "on-surface": "#e5e2e1",
+              "on-tertiary-fixed": "#2c1513",
+              "secondary-container": "#3aa625",
+              "surface-dim": "#131313",
+              "background": "#131313",
+              "on-tertiary-fixed-variant": "#5d3f3c",
+              "error": "#ffb4ab",
+              "primary": "#efffe3",
+              "primary-container": "#39ff14",
+              "surface-container-highest": "#353534",
+              "on-secondary": "#053900",
+              "on-tertiary": "#442927"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .neon-glow {
+            text-shadow: 0 0 15px rgba(57, 255, 20, 0.5);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #efffe3 0%, #39ff14 100%);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body min-h-screen flex">
+<!-- SideNavBar Shell -->
+<nav class="fixed left-0 top-0 h-full z-50 flex flex-col bg-[#131313] dark:bg-[#131313] h-screen w-20 md:w-64 border-r border-transparent">
+<div class="p-6">
+<h1 class="text-xl font-bold tracking-tight text-[#EFFFE3] dark:text-[#EFFFE3] font-headline">Kinetic Ledger</h1>
+<p class="hidden md:block text-xs font-label text-on-surface-variant tracking-widest mt-1">PREMIUM FINANCE</p>
+</div>
+<div class="flex-1 mt-4 space-y-2">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider">Dashboard</span>
+</a>
+<!-- Daily Entry (Active) -->
+<a class="flex items-center gap-4 bg-[#2A2A2A] text-[#39FF14] rounded-lg px-4 py-3 mx-2 scale-95 duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider font-bold">Daily Entry</span>
+</a>
+<!-- Insights (Inactive) -->
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider">Insights</span>
+</a>
+<!-- Yearly (Inactive) -->
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider">Yearly</span>
+</a>
+</div>
+<div class="mt-auto pb-8 space-y-2">
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider">Settings</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="hidden md:block font-label uppercase text-xs tracking-wider">Support</span>
+</a>
+<div class="px-6 pt-4 mt-4 border-t border-outline-variant/10">
+<div class="flex items-center gap-3">
+<img alt="User profile" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUHHqun6tR-Wm1zaj_mlC_YcLiqmEExjaF2nCSX4Gasji2p2n1F8doqDkWZkSL_xhsRIYAyiC0oxtBrO_FOAWpwlrXWg9NvBfcywt7qQnzBPNepK3ehaVcA24XG6DbVb3MJhjlngaxsH7QVEHkGvtYSmEGYOK6iezYylORSSKcLWgfVJ_fCHZut6nrJuzfCuFd4zKoBbX5odZ2Cyerl0eb9epw8V5jZe52blksvPKLOPSzj-q9P7BwppNqhqed0lTupLsfop6dXCb0"/>
+<div class="hidden md:block overflow-hidden">
+<p class="text-xs font-bold truncate">Alex Sterling</p>
+<p class="text-[10px] text-on-surface-variant truncate">Premium Member</p>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-20 md:ml-64 relative min-h-screen bg-surface">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 w-full md:left-64 md:w-[calc(100%-16rem)] z-40 flex justify-between items-center px-8 h-20 bg-[#131313]/80 backdrop-blur-md">
+<h2 class="text-2xl font-black text-[#39FF14] italic font-headline">The Kinetic Ledger</h2>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container-lowest border border-outline-variant/10 rounded-full px-4 py-2 w-64">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-on-surface-variant/50" placeholder="Search transactions..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-[#39FF14] transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-[#39FF14] transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="pt-32 pb-12 px-8 max-w-6xl mx-auto">
+<!-- Bento Layout Container -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Entry Card (Asymmetric Emphasis) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<section class="bg-surface-container-low rounded-xl p-8 border border-transparent">
+<div class="flex justify-between items-start mb-12">
+<div>
+<span class="text-xs font-label tracking-[0.2em] text-[#39FF14] uppercase font-bold">New Transaction</span>
+<h3 class="text-3xl font-headline font-bold text-on-surface mt-2">Log Daily Activity</h3>
+</div>
+<div class="text-right">
+<p class="text-xs font-label text-on-surface-variant uppercase">Current Ledger Date</p>
+<p class="text-lg font-headline font-semibold">October 24, 2023</p>
+</div>
+</div>
+<!-- Stylized Numeric Input -->
+<div class="relative group mb-12">
+<div class="absolute -top-6 left-0 flex items-baseline gap-2">
+<span class="text-4xl font-headline font-light text-on-surface-variant/50">$</span>
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant/70">USD Amount</span>
+</div>
+<input autofocus="" class="w-full bg-transparent border-none text-[8rem] md:text-[10rem] font-headline font-black text-on-surface p-0 focus:ring-0 placeholder:text-surface-container-high transition-all" step="0.01" type="number" value="0.00"/>
+<div class="h-1 w-full bg-surface-container-high relative overflow-hidden rounded-full mt-4">
+<div class="absolute top-0 left-0 h-full w-1/3 bg-[#39FF14] shadow-[0_0_15px_rgba(57,255,20,0.4)]"></div>
+</div>
+</div>
+<!-- Category Selector (Grid) -->
+<div class="space-y-6">
+<label class="text-xs font-label text-on-surface-variant tracking-widest uppercase font-bold">Select Category</label>
+<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+<!-- Food -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-container-highest/30 border border-outline-variant/5 hover:border-[#39FF14]/40 hover:bg-[#353534]/40 transition-all group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-low mb-3 group-hover:bg-[#39FF14]/10 transition-colors">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="restaurant">restaurant</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter">Dining</span>
+</button>
+<!-- Travel -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-container-highest/30 border border-outline-variant/5 hover:border-[#39FF14]/40 hover:bg-[#353534]/40 transition-all group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-low mb-3 group-hover:bg-[#39FF14]/10 transition-colors">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="flight">flight</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter">Travel</span>
+</button>
+<!-- Savings -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-[#2A2A2A] border border-[#39FF14]/30 shadow-[0_0_20px_rgba(57,255,20,0.1)] group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-[#39FF14]/20 mb-3">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="savings" style="font-variation-settings: 'FILL' 1;">savings</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter text-[#39FF14]">Savings</span>
+</button>
+<!-- Shopping -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-container-highest/30 border border-outline-variant/5 hover:border-[#39FF14]/40 hover:bg-[#353534]/40 transition-all group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-low mb-3 group-hover:bg-[#39FF14]/10 transition-colors">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter">Retail</span>
+</button>
+<!-- Entertainment -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-container-highest/30 border border-outline-variant/5 hover:border-[#39FF14]/40 hover:bg-[#353534]/40 transition-all group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-low mb-3 group-hover:bg-[#39FF14]/10 transition-colors">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="theater_comedy">theater_comedy</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter">Fun</span>
+</button>
+<!-- More -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-container-highest/30 border border-outline-variant/5 hover:border-[#39FF14]/40 hover:bg-[#353534]/40 transition-all group">
+<div class="w-12 h-12 rounded-full flex items-center justify-center bg-surface-container-low mb-3 group-hover:bg-[#39FF14]/10 transition-colors">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="grid_view">grid_view</span>
+</div>
+<span class="text-[10px] font-label font-bold uppercase tracking-tighter">Others</span>
+</button>
+</div>
+</div>
+<!-- Save Action -->
+<div class="mt-12 flex items-center gap-6">
+<button class="btn-gradient flex-1 py-5 rounded-xl text-on-primary font-headline font-black text-xl uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_8px_30px_rgba(57,255,20,0.3)]">
+                                Save Entry
+                            </button>
+<button class="p-5 rounded-xl bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors border border-outline-variant/10">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Secondary Context Panels -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Quick Stats Glass Panel -->
+<div class="glass-panel rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="bolt">bolt</span>
+<h4 class="text-xs font-label font-bold uppercase tracking-widest">Today's Context</h4>
+</div>
+<div class="space-y-6">
+<div>
+<p class="text-xs text-on-surface-variant mb-1">Total Daily Budget</p>
+<p class="text-2xl font-headline font-bold">$125.00</p>
+</div>
+<div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-[#39FF14]/40 w-[64%]"></div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-xs text-on-surface-variant mb-1">Spent So Far</p>
+<p class="text-xl font-headline font-semibold text-[#39FF14]">$80.00</p>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant mb-1">Remaining</p>
+<p class="text-xl font-headline font-semibold">$45.00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Liquidity Slider Card -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-transparent">
+<h4 class="text-xs font-label font-bold uppercase tracking-widest mb-6">Funding Source</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-[#39FF14]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#39FF14] text-lg" data-icon="credit_card">credit_card</span>
+</div>
+<p class="text-sm font-medium">Primary Obsidian</p>
+</div>
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-highest/20 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="account_balance">account_balance</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant group-hover:text-on-surface transition-colors">Capital Reserve</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Visual Accent Image -->
+<div class="relative h-48 rounded-xl overflow-hidden group">
+<img alt="Abstract Finance Aesthetic" class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-700" data-alt="abstract digital artwork of flowing neon green light trails on a deep black background representing financial data motion" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaWt-eBWuRHtl7T0TzCp8CpZHggS4ca5agWnV7ZMdYksLIe2Sd4qogW8ISw669f2B2sd0iizUDNEbrYIwa23NcIOJQ8ISspRlNU0PICWlGcUyrgPR8Yh0mYRbBUMIIjwE82NuOM7dtVyuIzumokdTtM7vvw6J8mDQ4dtwm5sgvoQPb7978IoNMQcMnsf7MMKWY2Q2SH_qBh1ogozvcXl2zK-GdU6kODq4ZUk78-4WLGtz7xeApJkmpLleFmjJLv4rKIV1t1pB_9jPG"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<p class="text-[10px] font-label font-bold uppercase tracking-tighter text-[#39FF14] neon-glow">AI Insights</p>
+<p class="text-sm font-medium leading-tight max-w-[180px]">Your retail spending is 12% lower than last Tuesday.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Entries Mini-Feed -->
+<section class="mt-12">
+<div class="flex items-center justify-between mb-8">
+<h4 class="text-xl font-headline font-bold">Recent Entries</h4>
+<button class="text-xs font-label uppercase font-bold text-[#39FF14] tracking-widest hover:opacity-70 transition-opacity">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Entry Item -->
+<div class="flex items-center justify-between p-6 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-all duration-300 group">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest flex items-center justify-center group-hover:bg-[#131313]">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="coffee">coffee</span>
+</div>
+<div>
+<p class="text-sm font-bold">Starbucks Espresso</p>
+<p class="text-xs text-on-surface-variant">Dining • 8:45 AM</p>
+</div>
+</div>
+<p class="text-lg font-headline font-bold">-$5.40</p>
+</div>
+<!-- Entry Item -->
+<div class="flex items-center justify-between p-6 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-all duration-300 group">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest flex items-center justify-center group-hover:bg-[#131313]">
+<span class="material-symbols-outlined text-[#39FF14]" data-icon="train">train</span>
+</div>
+<div>
+<p class="text-sm font-bold">City Transit Pass</p>
+<p class="text-xs text-on-surface-variant">Travel • Yesterday</p>
+</div>
+</div>
+<p class="text-lg font-headline font-bold">-$32.00</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Contextual FAB (Only for quick entry on home, but here for style demo) -->
+<!-- Hidden based on suppression rule for detail/transactional pages -->
+</body></html>

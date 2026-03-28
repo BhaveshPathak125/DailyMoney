@@ -1,0 +1,24 @@
+{
+  "settings": {
+    "currency": "INR",
+    "monthly_budget": 0.0,
+    "monthly_income_target": 0.0
+  },
+  "accounts": [
+    {
+      "name": "IDFC",
+      "balance": 50000.0
+    }
+  ],
+  "entries": [
+    {
+      "id": 2,
+      "date": "2026-03-28",
+      "type": "income",
+      "category": "Savings",
+      "description": "Total Balance In my Bank",
+      "account": "IDFC",
+      "amount": 50000.0
+    }
+  ]
+}

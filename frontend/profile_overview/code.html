@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Ledger | Alex Sterling Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#1c1b1b",
+                        "primary-fixed-dim": "#2ae500",
+                        "primary-fixed": "#79ff5b",
+                        "outline": "#85967c",
+                        "on-background": "#e5e2e1",
+                        "secondary-container": "#3aa625",
+                        "secondary-fixed": "#8dfc71",
+                        "on-tertiary-fixed-variant": "#5d3f3c",
+                        "on-primary": "#053900",
+                        "error-container": "#93000a",
+                        "secondary": "#72de58",
+                        "tertiary": "#fff8f7",
+                        "background": "#131313",
+                        "surface-container-highest": "#353534",
+                        "surface-container-high": "#2a2a2a",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#043200",
+                        "tertiary-container": "#ffd3ce",
+                        "on-secondary": "#053900",
+                        "on-tertiary-container": "#7a5955",
+                        "on-surface-variant": "#baccb0",
+                        "inverse-primary": "#106e00",
+                        "on-primary-fixed-variant": "#095300",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary": "#442927",
+                        "on-tertiary-fixed": "#2c1513",
+                        "surface-bright": "#3a3939",
+                        "surface-container-lowest": "#0e0e0e",
+                        "secondary-fixed-dim": "#72de58",
+                        "surface-dim": "#131313",
+                        "primary": "#efffe3",
+                        "on-primary-fixed": "#022100",
+                        "surface-variant": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#201f1f",
+                        "surface": "#131313",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-tint": "#2ae500",
+                        "outline-variant": "#3c4b35",
+                        "on-surface": "#e5e2e1",
+                        "primary-container": "#39ff14",
+                        "on-secondary-fixed": "#022100",
+                        "tertiary-fixed-dim": "#e7bdb8",
+                        "on-primary-container": "#107100",
+                        "tertiary-fixed": "#ffdad6",
+                        "on-secondary-fixed-variant": "#095300"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.4);
+            backdrop-filter: blur(20px);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #EFFFE3 0%, #39FF14 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #EFFFE3 0%, #39FF14 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen overflow-x-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-50 flex flex-col bg-[#131313] dark:bg-[#131313] h-screen w-20 md:w-64 border-r border-transparent">
+<div class="px-6 py-8">
+<h1 class="text-xl font-bold tracking-tight text-[#EFFFE3] dark:text-[#EFFFE3] font-headline">Kinetic Ledger</h1>
+<p class="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mt-1 opacity-60">Premium Finance</p>
+</div>
+<nav class="flex-1 space-y-2 mt-4">
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="hidden md:block font-label text-sm uppercase">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="hidden md:block font-label text-sm uppercase">Daily Entry</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="hidden md:block font-label text-sm uppercase">Insights</span>
+</a>
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="hidden md:block font-label text-sm uppercase">Yearly</span>
+</a>
+</nav>
+<div class="mt-auto pb-8 space-y-2">
+<a class="flex items-center gap-4 text-[#E5E2E1]/60 px-4 py-3 mx-2 hover:bg-[#353534]/40 hover:text-[#39FF14] transition-all duration-300 rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="hidden md:block font-label text-sm uppercase">Support</span>
+</a>
+<a class="flex items-center gap-4 bg-[#2A2A2A] text-[#39FF14] rounded-lg px-4 py-3 mx-2 active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="hidden md:block font-label text-sm uppercase">Settings</span>
+</a>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-full md:left-64 md:w-[calc(100%-16rem)] z-40 flex justify-between items-center px-8 h-20 bg-[#131313]/80 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-black text-[#39FF14] italic font-headline">The Kinetic Ledger</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container-lowest px-4 py-2 rounded-full border border-outline-variant/10">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 text-on-surface placeholder:text-on-surface-variant/40" placeholder="Search wealth data..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-[#E5E2E1]">
+<button class="material-symbols-outlined hover:opacity-80 transition-opacity">notifications</button>
+<button class="material-symbols-outlined hover:opacity-80 transition-opacity">account_balance_wallet</button>
+<img alt="Alex Sterling" class="w-10 h-10 rounded-full border border-primary-container/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdRTx_biAzXODEO6SV0axtlulTHriHk1-MGI7Xlu1OOlDQ94A9N6YuyEkkheRIFVdeQKADj-JRp--IVdTjum6z3nDgBybZdxoQ-LVXwHfwp_46tCH8Xy3HTPok5zwipeKhqBi4DJQutmEUoWjLGswBC0hr7nqh7lU0yIob_Cc-rgVki4XvSYNUKoPyvVuKSje1pOe5TbIqq9qEadeE56eDclE5FRTyNDZQ3lUcezOATBGPzroKUpqzRs2w5DGEaQonNGMzlgUuSu7Q"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-24 pl-20 md:pl-64 min-h-screen bg-background p-8">
+<div class="max-w-7xl mx-auto space-y-12">
+<!-- Hero Profile Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+<div class="lg:col-span-8 flex flex-col md:flex-row gap-8 items-center md:items-end">
+<div class="relative group">
+<div class="absolute inset-0 bg-primary-container blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+<img class="w-48 h-48 md:w-56 md:h-56 rounded-xl object-cover grayscale hover:grayscale-0 transition-all duration-700 relative z-10" data-alt="Close-up professional portrait of a confident man with short dark hair in high-contrast cinematic lighting with a deep black background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4BBplcn5gW6zkdtcO3ksR9yXhcCSCpJFEqXuCVRm1ADjkRFQ6CUmuaFvVIZgMBnbLzs93uRDaQi3ySG0XNEV1spwV5jB4HvuOzNOQvLKnRUpVtRGkBRv_zpwqHjiHLpvLg2Po_yUZif2XtiXzRtMdpvrM9hCrHMMiQ_gT_MRFb0M58rfauJLYZZ-04t7A6lCuCb6t0I8--hKBpCqCytWOhP80s4u5qkYd5VFrZMan9NVpIaiwOiEQijMimJBrj2HXu0zfp-HMEOwo"/>
+<div class="absolute -bottom-2 -right-2 bg-primary-container text-on-primary p-2 rounded-lg z-20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="space-y-2 text-center md:text-left">
+<span class="font-label text-xs tracking-widest text-primary-fixed uppercase">Founder Status</span>
+<h2 class="text-5xl md:text-7xl font-bold font-headline tracking-tighter text-on-surface">Alex Sterling</h2>
+<div class="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+<div class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-lg">
+<span class="material-symbols-outlined text-secondary text-sm">calendar_today</span>
+<span class="text-xs font-label">MEMBER SINCE 2021</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-lg">
+<span class="material-symbols-outlined text-primary-container text-sm">location_on</span>
+<span class="text-xs font-label">ZURICH, CH</span>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4 glass-panel p-8 rounded-xl border border-outline-variant/5">
+<p class="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-2">Current Liquidity Index</p>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">94.2</span>
+<span class="text-primary-container text-sm font-medium">+2.4% vs prev. month</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-[94%] gradient-button"></div>
+</div>
+</div>
+</section>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Wealth Card -->
+<div class="lg:col-span-2 bg-surface-container-low p-8 rounded-xl flex flex-col justify-between min-h-[240px] group hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h3 class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Total Tracked Wealth</h3>
+<div class="flex items-baseline gap-2">
+<span class="text-sm text-on-surface-variant opacity-60">$</span>
+<span class="text-5xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface">4,892,104</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary-container text-3xl opacity-20 group-hover:opacity-100 transition-opacity">account_balance</span>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 text-xs font-medium text-secondary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>$124k Growth this month</span>
+</div>
+</div>
+</div>
+<!-- Active Assets -->
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col justify-between group">
+<div class="space-y-1">
+<h3 class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Active Portfolios</h3>
+<p class="text-4xl font-headline font-bold">12</p>
+</div>
+<div class="flex -space-x-2 mt-4">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold border-2 border-surface-container-low">EQ</div>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold border-2 border-surface-container-low text-on-primary">RE</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-[10px] font-bold border-2 border-surface-container-low">CR</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-low border border-outline-variant/20 flex items-center justify-center text-[10px] font-bold">+9</div>
+</div>
+</div>
+<!-- Risk Score -->
+<div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 flex flex-col justify-between">
+<div class="space-y-1">
+<h3 class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Risk Exposure</h3>
+<p class="text-4xl font-headline font-bold">Low</p>
+</div>
+<div class="text-[10px] font-label text-on-surface-variant leading-relaxed">
+                        Algorithmically balanced across 4 continents and 3 asset classes.
+                    </div>
+</div>
+</section>
+<!-- Activity & Details Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Activity Feed -->
+<div class="lg:col-span-8 space-y-8">
+<div class="flex justify-between items-center">
+<h3 class="text-2xl font-headline font-bold">Recent Activity</h3>
+<button class="text-primary-fixed text-xs font-label uppercase tracking-widest hover:underline">View All Ledger</button>
+</div>
+<div class="space-y-4">
+<!-- Activity Card 1 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-on-surface font-semibold">Vanguard Index Fund Purchase</p>
+<p class="text-xs text-on-surface-variant font-label mt-1">OCT 24, 2023 • BROKERAGE ACC **9201</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface font-bold">-$12,500.00</p>
+<p class="text-[10px] text-secondary font-label uppercase">COMPLETED</p>
+</div>
+</div>
+<!-- Activity Card 2 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<div>
+<p class="text-on-surface font-semibold">Dividends Reinvested</p>
+<p class="text-xs text-on-surface-variant font-label mt-1">OCT 21, 2023 • GLOBAL EQUITY FUND</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-primary-container font-bold">+$3,420.12</p>
+<p class="text-[10px] text-secondary font-label uppercase">COMPLETED</p>
+</div>
+</div>
+<!-- Activity Card 3 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">real_estate_agent</span>
+</div>
+<div>
+<p class="text-on-surface font-semibold">Rental Income - Zurich Lofts</p>
+<p class="text-xs text-on-surface-variant font-label mt-1">OCT 15, 2023 • REAL ESTATE LEDGER</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-primary-container font-bold">+$8,900.00</p>
+<p class="text-[10px] text-secondary font-label uppercase">COMPLETED</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Details Sidebar -->
+<div class="lg:col-span-4 space-y-8">
+<h3 class="text-2xl font-headline font-bold">Asset Allocation</h3>
+<div class="bg-surface-container-low p-8 rounded-xl space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">EQUITIES</span>
+<span class="text-on-surface">55%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[55%] bg-primary-container"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">REAL ESTATE</span>
+<span class="text-on-surface">30%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[30%] bg-secondary"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">CASH &amp; STABLE</span>
+<span class="text-on-surface">10%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[10%] bg-primary-fixed"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">COMMODITIES</span>
+<span class="text-on-surface">5%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[5%] bg-outline"></div>
+</div>
+</div>
+</div>
+<!-- Quick Action -->
+<button class="w-full gradient-button py-4 rounded-lg font-bold text-on-primary font-headline uppercase tracking-widest hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] transition-all">
+                        Generate Wealth Report
+                    </button>
+<div class="p-6 border border-outline-variant/10 rounded-xl bg-surface-container-lowest">
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-primary-container">security</span>
+<div class="space-y-1">
+<p class="text-xs font-bold font-headline">LEDGER SECURITY</p>
+<p class="text-[10px] text-on-surface-variant leading-tight">Your data is encrypted with AES-256 and stored in sovereign Swiss vaults.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
