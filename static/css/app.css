@@ -1,0 +1,208 @@
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(57, 255, 20, 0.08), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 24%),
+    #131313;
+}
+
+.app-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.starfield-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.ambient-orb {
+  position: fixed;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(70px);
+  opacity: 0.22;
+  animation: orb-drift 18s ease-in-out infinite;
+}
+
+.ambient-orb.orb-a {
+  top: 8%;
+  left: 8%;
+  width: 18rem;
+  height: 18rem;
+  background: radial-gradient(circle, rgba(57, 255, 20, 0.28), transparent 68%);
+}
+
+.ambient-orb.orb-b {
+  right: 10%;
+  bottom: 8%;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 68%);
+  animation-delay: -6s;
+}
+
+.glass-card {
+  background: rgba(28, 27, 27, 0.72);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.045), transparent 75%);
+  opacity: 0;
+  transform: translateX(-30%);
+  transition: opacity 0.35s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+.interactive-surface {
+  transition: transform 0.24s ease, filter 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.interactive-surface:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.22);
+}
+
+.interactive-surface:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-fade {
+  animation: page-fade 0.35s ease-out;
+}
+
+.panel-enter {
+  animation: panel-enter 0.42s ease-out;
+}
+
+.chart-shell {
+  position: relative;
+  min-height: 18rem;
+}
+
+.chart-shell canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.auth-grid {
+  background-image:
+    linear-gradient(30deg, rgba(28, 27, 27, 0.9) 12%, transparent 12.5%, transparent 87%, rgba(28, 27, 27, 0.9) 87.5%, rgba(28, 27, 27, 0.9)),
+    linear-gradient(150deg, rgba(28, 27, 27, 0.9) 12%, transparent 12.5%, transparent 87%, rgba(28, 27, 27, 0.9) 87.5%, rgba(28, 27, 27, 0.9)),
+    linear-gradient(60deg, rgba(22, 22, 22, 0.95) 25%, transparent 25.5%, transparent 75%, rgba(22, 22, 22, 0.95) 75%, rgba(22, 22, 22, 0.95));
+  background-size: 88px 150px;
+}
+
+.sidebar-transition,
+.topbar-transition,
+.main-transition {
+  transition: width 0.28s ease, left 0.28s ease, margin-left 0.28s ease;
+}
+
+.sidebar-toggle {
+  transition: transform 0.28s ease, background-color 0.25s ease, filter 0.25s ease;
+}
+
+.nav-button {
+  position: relative;
+}
+
+.nav-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.9rem;
+  box-shadow: 0 0 0 rgba(57, 255, 20, 0);
+  transition: box-shadow 0.25s ease, opacity 0.25s ease;
+  opacity: 0;
+}
+
+.nav-button.is-active::before,
+.nav-button:hover::before {
+  opacity: 1;
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.14);
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  transform: rotate(180deg);
+}
+
+.sidebar-collapsed .sidebar-wide-only {
+  display: none !important;
+}
+
+.sidebar-collapsed .sidebar-width {
+  width: 5rem !important;
+}
+
+.sidebar-collapsed .content-left {
+  margin-left: 5rem !important;
+}
+
+.sidebar-collapsed .header-left {
+  left: 5rem !important;
+  width: calc(100% - 5rem) !important;
+}
+
+.calendar-cell {
+  transition: transform 0.18s ease, border-color 0.2s ease, background-color 0.2s ease, filter 0.2s ease;
+}
+
+.calendar-cell:hover {
+  transform: translateY(-1px);
+}
+
+.counter-glow {
+  text-shadow: 0 0 20px rgba(57, 255, 20, 0.12);
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12px, -16px, 0) scale(1.06);
+  }
+}

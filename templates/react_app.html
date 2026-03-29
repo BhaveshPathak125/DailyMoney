@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ app_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            surface: "#131313",
+            "surface-container-low": "#1c1b1b",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-high": "#2a2a2a",
+            "surface-container-highest": "#353534",
+            "on-surface": "#e5e2e1",
+            "on-surface-variant": "#baccb0",
+            primary: "#efffe3",
+            "primary-container": "#39ff14",
+            secondary: "#72de58",
+            error: "#ffb4ab",
+            outline: "#85967c",
+            "outline-variant": "#3c4b35",
+            "on-primary": "#053900"
+          },
+          fontFamily: {
+            headline: ["Manrope", "sans-serif"],
+            body: ["Inter", "sans-serif"]
+          }
+        }
+      }
+    };
+    window.DAILYMONEY_CONFIG = { appName: "{{ app_name }}" };
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body class="bg-surface text-on-surface font-body">
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='js/app.jsx') }}"></script>
+</body>
+</html>

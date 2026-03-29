@@ -1,21 +1,29 @@
 from __future__ import annotations
 
-import json
 import calendar
+import json
+import os
 from collections import defaultdict
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, jsonify, render_template, request, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-DATA_FILE = DATA_DIR / "ledger.json"
+LEGACY_LEDGER_FILE = DATA_DIR / "ledger.json"
+USERS_FILE = DATA_DIR / "users.json"
 
-DEFAULT_DATA = {
+DEFAULT_ACCOUNT_NAME = "Unassigned"
+APP_NAME = "DailyMoney"
+SESSION_SECRET = os.environ.get("DAILYMONEY_SECRET_KEY", "daily-money-dev-secret")
+
+DEFAULT_FINANCE = {
     "settings": {
         "currency": "INR",
         "monthly_budget": 0.0,
@@ -24,6 +32,24 @@ DEFAULT_DATA = {
     "accounts": [],
     "entries": [],
 }
+
+DEFAULT_PROFILE = {
+    "title": "DailyMoney Member",
+    "location": "India",
+    "bio": "Tracking income, expenses, and savings with clarity every day.",
+    "avatar_seed": "daily-money",
+}
+
+DEFAULT_PREFERENCES = {
+    "sidebar_state": "open",
+    "notifications": {
+        "weekly_digest": True,
+        "budget_alerts": True,
+        "unusual_activity": False,
+    },
+}
+
+DEFAULT_USERS_PAYLOAD = {"users": []}
 
 CATEGORY_CONFIG = [
     ("Food", "restaurant"),
@@ -49,8 +75,8 @@ CATEGORY_STYLES = {
 
 TYPE_OPTIONS = ["expense", "income", "saving"]
 
-app = Flask(__name__)
-DEFAULT_ACCOUNT_NAME = "Unassigned"
+app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = SESSION_SECRET
 
 
 @dataclass
@@ -73,25 +99,69 @@ class Entry:
         return f"{prefix}{money(self.amount)}"
 
 
-def ensure_data_file() -> None:
+def ensure_data_files() -> None:
     DATA_DIR.mkdir(exist_ok=True)
-    if not DATA_FILE.exists():
-        DATA_FILE.write_text(json.dumps(DEFAULT_DATA, indent=2), encoding="utf-8")
+    if not LEGACY_LEDGER_FILE.exists():
+        LEGACY_LEDGER_FILE.write_text(json.dumps(DEFAULT_FINANCE, indent=2), encoding="utf-8")
+    if not USERS_FILE.exists():
+        USERS_FILE.write_text(json.dumps(DEFAULT_USERS_PAYLOAD, indent=2), encoding="utf-8")
 
 
-def load_data() -> dict[str, Any]:
-    ensure_data_file()
-    return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+def read_json(path: Path, default: dict[str, Any]) -> dict[str, Any]:
+    ensure_data_files()
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, FileNotFoundError):
+        return deepcopy(default)
 
 
-def save_data(data: dict[str, Any]) -> None:
+def write_json(path: Path, data: dict[str, Any]) -> None:
     DATA_DIR.mkdir(exist_ok=True)
-    DATA_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-def parse_entries(data: dict[str, Any]) -> list[Entry]:
-    parsed = [Entry(**entry) for entry in data.get("entries", [])]
-    return sorted(parsed, key=lambda item: (item.date, item.id), reverse=True)
+def load_users_payload() -> dict[str, Any]:
+    payload = read_json(USERS_FILE, DEFAULT_USERS_PAYLOAD)
+    payload.setdefault("users", [])
+    return payload
+
+
+def save_users_payload(payload: dict[str, Any]) -> None:
+    write_json(USERS_FILE, payload)
+
+
+def load_legacy_finance() -> dict[str, Any]:
+    ledger = read_json(LEGACY_LEDGER_FILE, DEFAULT_FINANCE)
+    ledger.setdefault("settings", deepcopy(DEFAULT_FINANCE["settings"]))
+    ledger.setdefault("accounts", [])
+    ledger.setdefault("entries", [])
+    return ledger
+
+
+def blank_finance() -> dict[str, Any]:
+    return deepcopy(DEFAULT_FINANCE)
+
+
+def profile_defaults(name: str) -> dict[str, Any]:
+    defaults = deepcopy(DEFAULT_PROFILE)
+    defaults["avatar_seed"] = name.lower().replace(" ", "-") or "daily-money"
+    return defaults
+
+
+def finance_from_user(user: dict[str, Any]) -> dict[str, Any]:
+    finance = user.setdefault("finance", blank_finance())
+    finance.setdefault("settings", deepcopy(DEFAULT_FINANCE["settings"]))
+    finance.setdefault("accounts", [])
+    finance.setdefault("entries", [])
+    return finance
+
+
+def month_key(value: str) -> str:
+    return value[:7]
+
+
+def year_key(value: str) -> str:
+    return value[:4]
 
 
 def format_indian_number(value: float) -> str:
@@ -117,22 +187,6 @@ def money(value: float) -> str:
     return f"₹{format_indian_number(value)}"
 
 
-def month_key(value: str) -> str:
-    return value[:7]
-
-
-def year_key(value: str) -> str:
-    return value[:4]
-
-
-def current_month() -> str:
-    return date.today().strftime("%Y-%m")
-
-
-def current_year() -> str:
-    return date.today().strftime("%Y")
-
-
 def sanitize_entry_date(raw_value: str | None) -> str:
     today_value = date.today()
     if not raw_value:
@@ -150,51 +204,22 @@ def shift_month(base_date: date, offset: int) -> date:
     return date(year, month, 1)
 
 
-def build_month_calendar(selected_iso: str, entries: list[Entry]) -> dict[str, Any]:
-    selected_day = datetime.strptime(selected_iso, "%Y-%m-%d").date()
-    month_start = selected_day.replace(day=1)
-    today_value = date.today()
-    month_calendar = calendar.Calendar(firstweekday=0)
-    entry_dates = {entry.date for entry in entries}
-    weeks: list[list[dict[str, Any]]] = []
+def parse_entries(finance: dict[str, Any]) -> list[Entry]:
+    parsed = [Entry(**entry) for entry in finance.get("entries", [])]
+    return sorted(parsed, key=lambda item: (item.date, item.id), reverse=True)
 
-    for week in month_calendar.monthdatescalendar(month_start.year, month_start.month):
-        week_cells = []
-        for day in week:
-            iso_day = day.isoformat()
-            in_current_month = day.month == month_start.month
-            is_future = day > today_value
-            week_cells.append(
-                {
-                    "iso": iso_day,
-                    "day": day.day,
-                    "in_month": in_current_month,
-                    "is_selected": iso_day == selected_iso,
-                    "has_entries": iso_day in entry_dates,
-                    "is_future": is_future,
-                    "is_clickable": in_current_month and not is_future,
-                }
-            )
-        weeks.append(week_cells)
 
-    prev_month = shift_month(month_start, -1)
-    next_month = shift_month(month_start, 1)
-
+def serialize_entry(entry: Entry) -> dict[str, Any]:
     return {
-        "label": month_start.strftime("%B %Y"),
-        "weeks": weeks,
-        "prev_month_iso": prev_month.isoformat(),
-        "next_month_iso": next_month.isoformat() if next_month <= today_value.replace(day=1) else None,
-    }
-
-
-def build_yearly_editor_context(metrics: dict[str, Any], edit_date: str) -> dict[str, Any]:
-    selected_entries = [entry for entry in metrics["entries"] if entry.date == edit_date]
-    calendar_context = build_month_calendar(edit_date, metrics["entries"])
-    return {
-        "edit_date": edit_date,
-        "selected_entries": selected_entries,
-        "calendar_context": calendar_context,
+        "id": entry.id,
+        "date": entry.date,
+        "type": entry.type,
+        "category": entry.category,
+        "description": entry.description,
+        "account": entry.account,
+        "amount": entry.amount,
+        "displayAmount": entry.display_amount,
+        "signedAmount": round(entry.signed_amount, 2),
     }
 
 
@@ -314,19 +339,20 @@ def generate_ai_tips(
     return tips[:3]
 
 
-def calculate_metrics(data: dict[str, Any]) -> dict[str, Any]:
-    entries = parse_entries(data)
-    accounts = data.get("accounts", [])
-    monthly_budget = float(data.get("settings", {}).get("monthly_budget", 0))
-    monthly_income_target = float(data.get("settings", {}).get("monthly_income_target", 0))
+def calculate_metrics(finance: dict[str, Any]) -> dict[str, Any]:
+    entries = parse_entries(finance)
+    accounts = finance.get("accounts", [])
+    finance_settings = finance.get("settings", {})
+    monthly_budget = float(finance_settings.get("monthly_budget", 0))
+    monthly_income_target = float(finance_settings.get("monthly_income_target", 0))
     total_balance = sum(float(account["balance"]) for account in accounts)
 
     today_iso = date.today().isoformat()
-    month = current_month()
-    year = current_year()
+    current_month_key = date.today().strftime("%Y-%m")
+    current_year_key = date.today().strftime("%Y")
     today_entries = [entry for entry in entries if entry.date == today_iso]
-    month_entries = [entry for entry in entries if month_key(entry.date) == month]
-    year_entries = [entry for entry in entries if year_key(entry.date) == year]
+    month_entries = [entry for entry in entries if month_key(entry.date) == current_month_key]
+    year_entries = [entry for entry in entries if year_key(entry.date) == current_year_key]
 
     today_income = sum(entry.amount for entry in today_entries if entry.type == "income")
     today_expenses = sum(entry.amount for entry in today_entries if entry.type != "income")
@@ -369,39 +395,24 @@ def calculate_metrics(data: dict[str, Any]) -> dict[str, Any]:
         "accounts": accounts,
         "entries": entries,
         "recent_entries": entries[:6],
-        "total_balance": total_balance,
-        "today_income": today_income,
-        "today_expenses": today_expenses,
-        "today_net": today_income - today_expenses,
-        "month_income": month_income,
-        "month_expenses": month_expenses,
-        "month_savings": month_savings,
-        "year_income": year_income,
-        "year_expenses": year_expenses,
-        "savings_rate": savings_rate,
-        "budget_used": min(budget_used, 100),
-        "budget_remaining": max(monthly_budget - month_expenses, 0),
-        "monthly_budget": monthly_budget,
-        "monthly_income_target": monthly_income_target,
-        "monthly_categories": monthly_categories[:5],
-        "category_counts": category_counts,
-        "cash_flow": cash_flow_7,
-        "cash_flow_ranges": {
-            "7": cash_flow_7,
-            "30": cash_flow_30,
-            "90": cash_flow_90,
-        },
-        "month_breakdown": monthly_breakdown,
-        "month_breakdown_ranges": {
-            "3": slice_period_series(monthly_breakdown, 3),
-            "6": slice_period_series(monthly_breakdown, 6),
-            "12": slice_period_series(monthly_breakdown, 12),
-        },
-        "insight_chart_modes": {
-            "daily": daily_insight_series,
-            "monthly": monthly_breakdown,
-        },
-        "year_breakdown": monthly_breakdown,
+        "total_balance": round(total_balance, 2),
+        "today_income": round(today_income, 2),
+        "today_expenses": round(today_expenses, 2),
+        "today_net": round(today_income - today_expenses, 2),
+        "month_income": round(month_income, 2),
+        "month_expenses": round(month_expenses, 2),
+        "month_savings": round(month_savings, 2),
+        "year_income": round(year_income, 2),
+        "year_expenses": round(year_expenses, 2),
+        "savings_rate": round(savings_rate, 2),
+        "budget_used": round(min(budget_used, 100), 2),
+        "budget_remaining": round(max(monthly_budget - month_expenses, 0), 2),
+        "monthly_budget": round(monthly_budget, 2),
+        "monthly_income_target": round(monthly_income_target, 2),
+        "monthly_categories": monthly_categories,
+        "category_counts": dict(category_counts),
+        "cash_flow_ranges": {"7": cash_flow_7, "30": cash_flow_30, "90": cash_flow_90},
+        "insight_chart_modes": {"daily": daily_insight_series, "monthly": monthly_breakdown},
         "year_breakdown_ranges": {
             "6": slice_period_series(monthly_breakdown, 6),
             "12": slice_period_series(monthly_breakdown, 12),
@@ -410,30 +421,84 @@ def calculate_metrics(data: dict[str, Any]) -> dict[str, Any]:
         "current_date_label": date.today().strftime("%B %d, %Y"),
         "current_month_label": date.today().strftime("%B %Y"),
         "current_year_label": date.today().strftime("%Y"),
+        "today_iso": today_iso,
     }
 
 
-def update_account_balances(data: dict[str, Any], entry_type: str, account_name: str, amount: float) -> None:
-    account_name = account_name or DEFAULT_ACCOUNT_NAME
+def serialize_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **metrics,
+        "entries": [serialize_entry(entry) for entry in metrics["entries"]],
+        "recent_entries": [serialize_entry(entry) for entry in metrics["recent_entries"]],
+        "monthly_categories": [
+            {
+                "name": category,
+                "amount": round(amount, 2),
+                "count": metrics["category_counts"].get(category, 0),
+                "style": CATEGORY_STYLES.get(category, CATEGORY_STYLES["Other"]),
+            }
+            for category, amount in metrics["monthly_categories"]
+        ],
+    }
 
-    for account in data.get("accounts", []):
-        if account["name"] != account_name:
-            continue
-        if entry_type == "income":
-            account["balance"] = round(float(account["balance"]) + amount, 2)
-        else:
-            account["balance"] = round(float(account["balance"]) - amount, 2)
-        break
-    else:
-        opening_balance = amount if entry_type == "income" else -amount
-        data.setdefault("accounts", []).append(
-            {"name": account_name, "balance": round(opening_balance, 2)}
-        )
+
+def build_month_calendar(selected_iso: str, entries: list[Entry]) -> dict[str, Any]:
+    selected_day = datetime.strptime(selected_iso, "%Y-%m-%d").date()
+    month_start = selected_day.replace(day=1)
+    today_value = date.today()
+    month_calendar = calendar.Calendar(firstweekday=0)
+    entry_dates = {entry.date for entry in entries}
+    weeks: list[list[dict[str, Any]]] = []
+
+    for week in month_calendar.monthdatescalendar(month_start.year, month_start.month):
+        week_cells = []
+        for day_value in week:
+            iso_day = day_value.isoformat()
+            in_current_month = day_value.month == month_start.month
+            is_future = day_value > today_value
+            week_cells.append(
+                {
+                    "iso": iso_day,
+                    "day": day_value.day,
+                    "inMonth": in_current_month,
+                    "isSelected": iso_day == selected_iso,
+                    "hasEntries": iso_day in entry_dates,
+                    "isFuture": is_future,
+                    "isClickable": in_current_month and not is_future,
+                }
+            )
+        weeks.append(week_cells)
+
+    prev_month = shift_month(month_start, -1)
+    next_month = shift_month(month_start, 1)
+
+    return {
+        "label": month_start.strftime("%B %Y"),
+        "weeks": weeks,
+        "prevMonthIso": prev_month.isoformat(),
+        "nextMonthIso": next_month.isoformat() if next_month <= today_value.replace(day=1) else None,
+    }
 
 
-def rebuild_accounts_from_entries(data: dict[str, Any]) -> None:
+def build_day_editor_payload(metrics: dict[str, Any], edit_date: str) -> dict[str, Any]:
+    selected_entries = [entry for entry in metrics["entries"] if entry.date == edit_date]
+    total_income = sum(entry.amount for entry in selected_entries if entry.type == "income")
+    total_expenses = sum(entry.amount for entry in selected_entries if entry.type != "income")
+    return {
+        "editDate": edit_date,
+        "calendar": build_month_calendar(edit_date, metrics["entries"]),
+        "selectedEntries": [serialize_entry(entry) for entry in selected_entries],
+        "summary": {
+            "income": round(total_income, 2),
+            "expenses": round(total_expenses, 2),
+            "net": round(total_income - total_expenses, 2),
+        },
+    }
+
+
+def rebuild_accounts_from_entries(finance: dict[str, Any]) -> None:
     balances: dict[str, float] = defaultdict(float)
-    for entry in data.get("entries", []):
+    for entry in finance.get("entries", []):
         account_name = entry.get("account", "").strip() or DEFAULT_ACCOUNT_NAME
         amount = float(entry.get("amount", 0))
         if entry.get("type") == "income":
@@ -441,195 +506,344 @@ def rebuild_accounts_from_entries(data: dict[str, Any]) -> None:
         else:
             balances[account_name] -= amount
 
-    data["accounts"] = [
+    finance["accounts"] = [
         {"name": name, "balance": round(balance, 2)}
         for name, balance in sorted(balances.items())
     ]
 
 
-@app.context_processor
-def template_helpers() -> dict[str, Any]:
+def public_user(user: dict[str, Any]) -> dict[str, Any]:
+    finance = finance_from_user(user)
     return {
-        "money": money,
-        "today_iso": date.today().isoformat(),
-        "category_styles": CATEGORY_STYLES,
-        "currency_symbol": "₹",
-        "currency_code": "INR",
-        "default_account_name": DEFAULT_ACCOUNT_NAME,
+        "id": user["id"],
+        "name": user["name"],
+        "email": user["email"],
+        "profile": user.get("profile", {}),
+        "preferences": user.get("preferences", deepcopy(DEFAULT_PREFERENCES)),
+        "settings": finance.get("settings", {}),
     }
 
 
-@app.route("/")
-def index():
-    return redirect(url_for("dashboard"))
+def next_user_id(users: list[dict[str, Any]]) -> int:
+    return max((user.get("id", 0) for user in users), default=0) + 1
 
 
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html", metrics=calculate_metrics(load_data()))
+def normalize_email(raw_email: str) -> str:
+    return raw_email.strip().lower()
 
 
-@app.route("/daily-entry", methods=["GET", "POST"])
-def daily_entry():
-    data = load_data()
-    if request.method == "POST":
-        form = request.form
-        amount = abs(float(form.get("amount", 0) or 0))
-        entry_type = form.get("type", "expense")
-        custom_category = form.get("custom_category", "").strip()
-        category = custom_category or form.get("category", "Other").strip() or "Other"
-        description = form.get("description", "").strip() or category
-        account = form.get("account", "").strip() or DEFAULT_ACCOUNT_NAME
-        entry_date = sanitize_entry_date(form.get("date", date.today().isoformat()))
+def current_user_id() -> int | None:
+    raw_id = session.get("user_id")
+    if isinstance(raw_id, int):
+        return raw_id
+    return None
 
-        if amount > 0:
-            next_id = max((entry["id"] for entry in data.get("entries", [])), default=0) + 1
-            data.setdefault("entries", []).append(
-                {
-                    "id": next_id,
-                    "date": entry_date,
-                    "type": entry_type,
-                    "category": category,
-                    "description": description,
-                    "account": account,
-                    "amount": amount,
-                }
-            )
-            rebuild_accounts_from_entries(data)
-            save_data(data)
-        return redirect(url_for("daily_entry"))
 
-    return render_template(
-        "daily_entry.html",
-        metrics=calculate_metrics(data),
-        categories=CATEGORY_CONFIG,
-        type_options=TYPE_OPTIONS,
+def current_user_record(payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    payload = payload or load_users_payload()
+    user_id = current_user_id()
+    if user_id is None:
+        return None
+    for user in payload.get("users", []):
+        if user.get("id") == user_id:
+            return user
+    return None
+
+
+def require_user(payload: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    payload = payload or load_users_payload()
+    user = current_user_record(payload)
+    if not user:
+        return None, payload
+    return user, payload
+
+
+def build_app_state(user: dict[str, Any], edit_date: str | None = None) -> dict[str, Any]:
+    finance = finance_from_user(user)
+    metrics = calculate_metrics(finance)
+    safe_date = sanitize_entry_date(edit_date)
+    return {
+        "appName": APP_NAME,
+        "user": public_user(user),
+        "metrics": serialize_metrics(metrics),
+        "categories": [
+            {
+                "name": category,
+                "icon": icon,
+                "style": CATEGORY_STYLES.get(category, CATEGORY_STYLES["Other"]),
+            }
+            for category, icon in CATEGORY_CONFIG
+        ],
+        "typeOptions": TYPE_OPTIONS,
+        "dayEditor": build_day_editor_payload(metrics, safe_date),
+    }
+
+
+def create_user(name: str, email: str, password: str, users_payload: dict[str, Any]) -> dict[str, Any]:
+    users = users_payload.setdefault("users", [])
+    is_first_user = not users
+    finance_seed = load_legacy_finance() if is_first_user else blank_finance()
+    user = {
+        "id": next_user_id(users),
+        "name": name.strip(),
+        "email": normalize_email(email),
+        "password_hash": generate_password_hash(password),
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "profile": profile_defaults(name),
+        "preferences": deepcopy(DEFAULT_PREFERENCES),
+        "finance": finance_seed,
+    }
+    users.append(user)
+    return user
+
+
+def json_error(message: str, status: int = 400):
+    return jsonify({"ok": False, "error": message}), status
+
+
+def parse_json_body() -> dict[str, Any]:
+    return request.get_json(silent=True) or {}
+
+
+@app.context_processor
+def shell_context() -> dict[str, Any]:
+    return {"app_name": APP_NAME}
+
+
+@app.get("/api/auth/session")
+def api_auth_session():
+    user = current_user_record()
+    return jsonify({"ok": True, "authenticated": bool(user), "user": public_user(user) if user else None})
+
+
+@app.post("/api/auth/register")
+def api_register():
+    payload = load_users_payload()
+    body = parse_json_body()
+    name = body.get("name", "").strip()
+    email = normalize_email(body.get("email", ""))
+    password = body.get("password", "")
+
+    if len(name) < 2:
+        return json_error("Please enter your name.")
+    if "@" not in email:
+        return json_error("Please enter a valid email address.")
+    if len(password) < 6:
+        return json_error("Password must be at least 6 characters.")
+    if any(user.get("email") == email for user in payload.get("users", [])):
+        return json_error("An account with this email already exists.", 409)
+
+    user = create_user(name, email, password, payload)
+    save_users_payload(payload)
+    session["user_id"] = user["id"]
+    return jsonify({"ok": True, "user": public_user(user)})
+
+
+@app.post("/api/auth/login")
+def api_login():
+    payload = load_users_payload()
+    body = parse_json_body()
+    email = normalize_email(body.get("email", ""))
+    password = body.get("password", "")
+
+    user = next((item for item in payload.get("users", []) if item.get("email") == email), None)
+    if not user or not check_password_hash(user.get("password_hash", ""), password):
+        return json_error("Invalid email or password.", 401)
+
+    session["user_id"] = user["id"]
+    return jsonify({"ok": True, "user": public_user(user)})
+
+
+@app.post("/api/auth/logout")
+def api_logout():
+    session.clear()
+    return jsonify({"ok": True})
+
+
+@app.get("/api/app-state")
+def api_app_state():
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+    return jsonify({"ok": True, "state": build_app_state(user, request.args.get("edit_date"))})
+
+
+@app.post("/api/entries")
+def api_create_entry():
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+
+    body = parse_json_body()
+    amount = abs(float(body.get("amount", 0) or 0))
+    if amount <= 0:
+        return json_error("Amount must be greater than zero.")
+
+    finance = finance_from_user(user)
+    category = body.get("customCategory", "").strip() or body.get("category", "Other").strip() or "Other"
+    description = body.get("description", "").strip() or category
+    account = body.get("account", "").strip() or DEFAULT_ACCOUNT_NAME
+    entry_type = body.get("type", "expense")
+    entry_date = sanitize_entry_date(body.get("date"))
+    next_id = max((entry.get("id", 0) for entry in finance.get("entries", [])), default=0) + 1
+    finance.setdefault("entries", []).append(
+        {
+            "id": next_id,
+            "date": entry_date,
+            "type": entry_type,
+            "category": category,
+            "description": description,
+            "account": account,
+            "amount": amount,
+        }
     )
+    rebuild_accounts_from_entries(finance)
+    save_users_payload(payload)
+    return jsonify({"ok": True, "state": build_app_state(user, entry_date)})
 
 
-@app.post("/entries/<int:entry_id>/update")
-def update_entry(entry_id: int):
-    data = load_data()
-    form = request.form
-    amount = abs(float(form.get("amount", 0) or 0))
-    entry_type = form.get("type", "expense")
-    custom_category = form.get("custom_category", "").strip()
-    category = custom_category or form.get("category", "Other").strip() or "Other"
-    description = form.get("description", "").strip() or category
-    account = form.get("account", "").strip() or DEFAULT_ACCOUNT_NAME
-    entry_date = sanitize_entry_date(form.get("date"))
+@app.put("/api/entries/<int:entry_id>")
+def api_update_entry(entry_id: int):
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
 
-    for entry in data.get("entries", []):
+    body = parse_json_body()
+    finance = finance_from_user(user)
+    amount = abs(float(body.get("amount", 0) or 0))
+    entry_date = sanitize_entry_date(body.get("date"))
+
+    for entry in finance.get("entries", []):
         if entry.get("id") != entry_id:
             continue
-        entry["type"] = entry_type
-        entry["category"] = category
-        entry["description"] = description
-        entry["account"] = account
+        entry["type"] = body.get("type", entry.get("type", "expense"))
+        entry["category"] = body.get("customCategory", "").strip() or body.get("category", entry.get("category", "Other")).strip() or "Other"
+        entry["description"] = body.get("description", "").strip() or entry["category"]
+        entry["account"] = body.get("account", "").strip() or DEFAULT_ACCOUNT_NAME
         entry["date"] = entry_date
         if amount > 0:
             entry["amount"] = amount
         break
+    else:
+        return json_error("Entry not found.", 404)
 
-    rebuild_accounts_from_entries(data)
-    save_data(data)
-    target = form.get("redirect_to", "yearly_analysis")
-    if target == "day_editor":
-        return redirect(url_for("day_editor", edit_date=entry_date))
-    return redirect(url_for("yearly_analysis", edit_date=entry_date))
-
-
-@app.post("/entries/<int:entry_id>/delete")
-def delete_entry(entry_id: int):
-    data = load_data()
-    redirect_date = sanitize_entry_date(request.form.get("redirect_date"))
-    data["entries"] = [entry for entry in data.get("entries", []) if entry.get("id") != entry_id]
-    rebuild_accounts_from_entries(data)
-    save_data(data)
-    target = request.form.get("redirect_to", "daily_entry")
-    if target == "yearly_analysis":
-        return redirect(url_for("yearly_analysis", edit_date=redirect_date))
-    return redirect(url_for("daily_entry"))
+    rebuild_accounts_from_entries(finance)
+    save_users_payload(payload)
+    return jsonify({"ok": True, "state": build_app_state(user, entry_date)})
 
 
-@app.post("/entries/clear")
-def clear_entries():
-    data = load_data()
-    data["entries"] = []
-    data["accounts"] = []
-    save_data(data)
-    return redirect(url_for("daily_entry"))
+@app.delete("/api/entries/<int:entry_id>")
+def api_delete_entry(entry_id: int):
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
 
-
-@app.route("/monthly-insights")
-def monthly_insights():
-    return render_template("monthly_insights.html", metrics=calculate_metrics(load_data()))
-
-
-@app.route("/yearly-analysis")
-def yearly_analysis():
-    data = load_data()
-    metrics = calculate_metrics(data)
+    finance = finance_from_user(user)
     edit_date = sanitize_entry_date(request.args.get("edit_date"))
-    editor_context = build_yearly_editor_context(metrics, edit_date)
-    return render_template(
-        "yearly_analysis.html",
-        metrics=metrics,
-        categories=CATEGORY_CONFIG,
-        type_options=TYPE_OPTIONS,
-        **editor_context,
+    original_count = len(finance.get("entries", []))
+    finance["entries"] = [entry for entry in finance.get("entries", []) if entry.get("id") != entry_id]
+    if len(finance["entries"]) == original_count:
+        return json_error("Entry not found.", 404)
+
+    rebuild_accounts_from_entries(finance)
+    save_users_payload(payload)
+    return jsonify({"ok": True, "state": build_app_state(user, edit_date)})
+
+
+@app.delete("/api/entries")
+def api_clear_entries():
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+
+    finance = finance_from_user(user)
+    finance["entries"] = []
+    finance["accounts"] = []
+    save_users_payload(payload)
+    return jsonify({"ok": True, "state": build_app_state(user, date.today().isoformat())})
+
+
+@app.get("/api/profile")
+def api_get_profile():
+    user, _payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+    return jsonify({"ok": True, "profile": user.get("profile", {}), "user": public_user(user)})
+
+
+@app.patch("/api/profile")
+def api_update_profile():
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+
+    body = parse_json_body()
+    name = body.get("name", "").strip() or user["name"]
+    user["name"] = name
+    profile = user.setdefault("profile", profile_defaults(name))
+    profile["title"] = body.get("title", profile.get("title", "")).strip()
+    profile["location"] = body.get("location", profile.get("location", "")).strip()
+    profile["bio"] = body.get("bio", profile.get("bio", "")).strip()
+    save_users_payload(payload)
+    return jsonify({"ok": True, "user": public_user(user)})
+
+
+@app.get("/api/settings")
+def api_get_settings():
+    user, _payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+    finance = finance_from_user(user)
+    return jsonify(
+        {
+            "ok": True,
+            "settings": finance.get("settings", {}),
+            "preferences": user.get("preferences", deepcopy(DEFAULT_PREFERENCES)),
+        }
     )
 
 
-@app.route("/yearly-analysis/editor")
-def yearly_analysis_editor():
-    data = load_data()
-    metrics = calculate_metrics(data)
-    edit_date = sanitize_entry_date(request.args.get("edit_date"))
-    editor_context = build_yearly_editor_context(metrics, edit_date)
-    return render_template(
-        "partials/yearly_editor.html",
-        metrics=metrics,
-        categories=CATEGORY_CONFIG,
-        type_options=TYPE_OPTIONS,
-        **editor_context,
-    )
+@app.patch("/api/settings")
+def api_update_settings():
+    user, payload = require_user()
+    if not user:
+        return json_error("Authentication required.", 401)
+
+    body = parse_json_body()
+    finance = finance_from_user(user)
+    settings = finance.setdefault("settings", deepcopy(DEFAULT_FINANCE["settings"]))
+    preferences = user.setdefault("preferences", deepcopy(DEFAULT_PREFERENCES))
+
+    settings["currency"] = body.get("currency", settings.get("currency", "INR")) or "INR"
+    settings["monthly_budget"] = abs(float(body.get("monthlyBudget", settings.get("monthly_budget", 0)) or 0))
+    settings["monthly_income_target"] = abs(float(body.get("monthlyIncomeTarget", settings.get("monthly_income_target", 0)) or 0))
+    preferences["sidebar_state"] = body.get("sidebarState", preferences.get("sidebar_state", "open"))
+
+    notifications = preferences.setdefault("notifications", deepcopy(DEFAULT_PREFERENCES["notifications"]))
+    incoming_notifications = body.get("notifications", {})
+    if isinstance(incoming_notifications, dict):
+        notifications["weekly_digest"] = bool(incoming_notifications.get("weeklyDigest", notifications.get("weekly_digest", True)))
+        notifications["budget_alerts"] = bool(incoming_notifications.get("budgetAlerts", notifications.get("budget_alerts", True)))
+        notifications["unusual_activity"] = bool(incoming_notifications.get("unusualActivity", notifications.get("unusual_activity", False)))
+
+    save_users_payload(payload)
+    return jsonify({"ok": True, "user": public_user(user), "state": build_app_state(user)})
 
 
-@app.route("/day-editor")
-def day_editor():
-    data = load_data()
-    metrics = calculate_metrics(data)
-    edit_date = sanitize_entry_date(request.args.get("edit_date"))
-    editor_context = build_yearly_editor_context(metrics, edit_date)
-    return render_template(
-        "day_editor.html",
-        metrics=metrics,
-        categories=CATEGORY_CONFIG,
-        type_options=TYPE_OPTIONS,
-        editor_endpoint="day_editor_partial",
-        redirect_page="day_editor",
-        **editor_context,
-    )
-
-
-@app.route("/day-editor/editor")
-def day_editor_partial():
-    data = load_data()
-    metrics = calculate_metrics(data)
-    edit_date = sanitize_entry_date(request.args.get("edit_date"))
-    editor_context = build_yearly_editor_context(metrics, edit_date)
-    return render_template(
-        "partials/yearly_editor.html",
-        metrics=metrics,
-        categories=CATEGORY_CONFIG,
-        type_options=TYPE_OPTIONS,
-        editor_endpoint="day_editor_partial",
-        redirect_page="day_editor",
-        **editor_context,
-    )
+@app.get("/")
+@app.get("/dashboard")
+@app.get("/daily-entry")
+@app.get("/monthly-insights")
+@app.get("/yearly-analysis")
+@app.get("/day-editor")
+@app.get("/profile-overview")
+@app.get("/account-settings")
+@app.get("/login")
+@app.get("/register")
+def react_app():
+    return render_template("react_app.html")
 
 
 if __name__ == "__main__":
-    ensure_data_file()
+    ensure_data_files()
     app.run(debug=True)

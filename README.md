@@ -1,64 +1,43 @@
 # DailyMoney
 
-DailyMoney is a lightweight personal finance tracker built for everyday use. It helps you record income and expenses, monitor balances across accounts, review daily and monthly cash flow, and edit past transactions from a calendar-based workflow.
+DailyMoney is a modern personal finance tracker built for daily use. It helps you log income and expenses, review trends, manage account balances, edit past-day transactions, and now includes authentication, profile management, and account settings in a React-based app experience.
 
-This project is intentionally kept as an MVP: simple Python backend, JSON file storage, and an interactive frontend. It is designed for one person using it daily on a local machine without the overhead of MongoDB or SQL.
+The project is still intentionally lightweight: Flask on the backend, React on the frontend, and JSON storage instead of a full database. That keeps the app easy to run locally while still feeling like a proper product.
 
-## Highlights
+## Overview
 
-- Daily entry flow for income, expenses, savings, and custom categories
-- Dashboard with total money overview, account balances, monthly spending, and cash flow
-- Insights page with switchable daily and monthly line graphs
-- Yearly analysis with annual inflow and outflow trends
-- Dedicated Day Editor with a calendar navigator for editing previous days
-- Delete individual entries or clear all data
-- INR currency formatting
-- Animated counters, hover effects, collapsible sidebar, and interactive charts
-- Simple AI-style spending suggestions based on your real entries
+- React-based frontend served by Flask
+- Session-based authentication with login and registration
+- Profile overview and account settings pages
+- Daily finance tracking with insights and yearly analysis
+- Day Editor with calendar-based past-date editing
+- JSON storage for users, settings, accounts, and entries
+- INR-first money formatting and animated UI
 
-## MVP Philosophy
+## Tech Stack
 
-DailyMoney focuses on being practical, usable, and small:
-
-- No full database setup
-- No unnecessary backend complexity
-- No large generated codebase
-- Easy to run locally every day
-
-For this MVP, data is stored in [`data/ledger.json`](data/ledger.json), which keeps the app portable and easy to maintain.
-
-## Architecture
-
-### Tech Stack
-
+- Frontend: React, ReactDOM, Tailwind CSS via CDN, Chart.js
 - Backend: Python, Flask
-- Storage: JSON file
-- Frontend: Jinja templates, Tailwind via CDN, Chart.js
-- Runtime: Local `.venv` virtual environment
+- Auth: Flask session cookies + password hashing
+- Storage: JSON files
+- Runtime: Local `.venv`
+
+## Current Architecture
 
 ### High-Level Flow
 
 ```text
-User Interaction
+React Frontend
     |
     v
-Flask Routes in app.py
+Flask App Shell + JSON API
     |
-    +--> Read / write ledger data from data/ledger.json
-    |
-    +--> Compute metrics, balances, trends, category summaries, AI tips
-    |
-    v
-Jinja Templates in templates/
-    |
-    +--> Dashboard
-    +--> Daily Entry
-    +--> Monthly Insights
-    +--> Yearly Analysis
-    +--> Day Editor
+    +--> Auth routes
+    +--> Profile/settings routes
+    +--> Finance entry + analytics routes
     |
     v
-Interactive UI with charts, counters, filters, and animations
+JSON Storage in data/
 ```
 
 ### Project Structure
@@ -70,120 +49,133 @@ DailyMoney/
 ├── install.ps1
 ├── run.ps1
 ├── data/
-│   └── ledger.json
+│   ├── ledger.json
+│   └── users.json
+├── static/
+│   ├── css/
+│   │   └── app.css
+│   └── js/
+│       └── app.jsx
 ├── templates/
-│   ├── dashboard.html
-│   ├── daily_entry.html
-│   ├── monthly_insights.html
-│   ├── yearly_analysis.html
-│   ├── day_editor.html
-│   └── partials/
-│       └── yearly_editor.html
+│   └── react_app.html
 └── frontend/
-    └── ...
+    ├── dashboard/
+    ├── daily_entry/
+    ├── monthly_insights/
+    ├── yearly_analysis/
+    ├── login_screen/
+    ├── register_screen/
+    ├── profile_overview/
+    └── account_settings/
 ```
 
-### Key Responsibilities
+## Folder Explanation
 
-- [`app.py`](app.py)
-  Handles routes, data loading and saving, transaction updates, metrics generation, chart datasets, account balance rebuilding, and page rendering.
+There are two important UI-related folders in this repo:
 
-- [`data/ledger.json`](data/ledger.json)
-  Stores entries, accounts, balances, and app-level finance data for the MVP.
+- `templates/`
+  This is the live Flask template folder. Right now the app uses a single entry file: `react_app.html`.
 
-- [`templates/dashboard.html`](templates/dashboard.html)
-  Shows the main finance overview, monthly spending, recent entries, account cards, and cash flow chart.
+- `frontend/`
+  This is the design/reference folder that contains the source UI mockups and inspiration screens used while building the app.
 
-- [`templates/daily_entry.html`](templates/daily_entry.html)
-  Lets you add new transactions and manage or delete existing ones.
+The React app itself lives in:
 
-- [`templates/monthly_insights.html`](templates/monthly_insights.html)
-  Shows daily and monthly trend lines with category allocation and monthly summary cards.
+- `static/js/app.jsx`
+- `static/css/app.css`
 
-- [`templates/yearly_analysis.html`](templates/yearly_analysis.html)
-  Displays yearly performance, annual charts, and category breakdown.
-
-- [`templates/day_editor.html`](templates/day_editor.html)
-  Provides a dedicated calendar-based interface for editing past-day transactions.
-
-## Features
+## Core Features
 
 ### Finance Tracking
 
 - Add income, expense, and savings entries
-- Track money by account
-- Support custom categories and descriptions
-- Block future-date editing for daily finance logs
-- Update or delete older entries from the Day Editor
+- Track balances across accounts
+- Support categories, descriptions, and custom labels
+- Delete individual entries or clear all entries
+- Edit older transactions from a calendar-based day editor
 
 ### Analytics
 
-- Total money overview on the dashboard
-- Daily net, monthly savings, and savings rate counters
-- Monthly category breakdown
-- Cash flow chart with range switching
-- Insights chart with daily and monthly view switching
-- Yearly inflow and outflow comparison
+- Dashboard with total tracked money and account balances
+- Cash flow chart with live range switching
+- Insights page with daily/monthly line graph switching
+- Yearly analysis with inflow vs outflow trends
+- Monthly category allocation and spending summaries
+- AI-style spending suggestions from real data
 
-### UX
+### Auth & User Features
 
-- Modern dark finance UI
-- Animated counters and chart transitions
-- Hover glow and interactive feedback on cards
-- Collapsible sidebar for more screen space
-- In-place calendar navigation in the Day Editor
+- Register and login flow
+- Session-based authentication
+- Profile overview page
+- Account settings page
+- Editable user profile information
+- Editable finance settings such as:
+  - monthly budget
+  - monthly income target
+  - notification preferences
 
-### Data Management
+### UI/UX
 
-- JSON-based storage for simple local use
-- Delete individual entries
-- Clear all finance data when needed
-- Works without MongoDB or SQL
+- React frontend with animated transitions
+- Collapsible sidebar
+- Interactive cards and hover states
+- Lightweight animated starfield background
+- Premium dark finance look with neon highlights
 
 ## Pages
 
-### Dashboard
+### Public
 
-- Total money overview
-- Recent entries
-- Monthly spending section
-- Cash flow graph
-- AI spending suggestions
+- `/login`
+- `/register`
 
-### Daily Entry
+### Protected App Pages
 
-- Add new finance entries
-- Choose category, account, type, amount, and date
-- Manage and delete stored transactions
+- `/dashboard`
+- `/daily-entry`
+- `/monthly-insights`
+- `/yearly-analysis`
+- `/day-editor`
+- `/profile-overview`
+- `/account-settings`
 
-### Insights
+## Data Model
 
-- Daily vs monthly line graph switching
-- Monthly savings and budget usage
-- Category allocation breakdown
+DailyMoney currently avoids MongoDB/SQL and stores data in JSON:
 
-### Yearly Analysis
+- `data/users.json`
+  Stores registered users, password hashes, profile data, settings, preferences, and user finance data.
 
-- Annual financial summary
-- Inflow vs outflow chart
-- Sector/category breakdown
+- `data/ledger.json`
+  Legacy finance seed file retained for lightweight migration/bootstrapping.
 
-### Day Editor
+This approach keeps the project easy to run locally and simple to iterate on before moving to a real database later.
 
-- Calendar-style date navigator
-- Load previous dates only
-- Edit or delete transactions for any past day
+## Backend Responsibilities
 
-## Why No Database?
+`app.py` currently handles:
 
-For a personal daily MVP, a database is not required yet. Using a JSON ledger makes the project:
+- serving the React app shell
+- authentication APIs
+- profile and settings APIs
+- finance entry CRUD APIs
+- metrics generation
+- chart data generation
+- account balance rebuilding
+- JSON persistence
 
-- easier to set up
-- easier to understand
-- faster to maintain
-- better suited for single-user local usage
+## Frontend Responsibilities
 
-If the project later grows into a multi-user app, cloud product, or needs authentication and audit history, moving to SQLite or PostgreSQL would be the next step.
+`static/js/app.jsx` currently handles:
+
+- app routing by page path
+- auth screens
+- dashboard, insights, yearly, and day-editor screens
+- profile overview and account settings
+- interactive charts
+- sidebar behavior
+- animated UI state and lightweight background effects
 
 ## Setup
 
@@ -223,38 +215,27 @@ Then open:
 http://127.0.0.1:5000
 ```
 
-## Data File
+## Why No Database Yet?
 
-Your editable finance data lives in:
+For the current stage of DailyMoney, JSON storage is enough because the app is still:
 
-- [`data/ledger.json`](data/ledger.json)
+- local-first
+- lightweight
+- single-user or limited-user
+- focused on fast iteration
 
-You can use the app UI for normal daily usage, or edit the JSON manually if you want to do bulk changes carefully.
+When the project grows further, the next natural step would be moving to SQLite or PostgreSQL.
 
-## Current Scope
+## Roadmap Ideas
 
-This project is currently:
-
-- a local personal finance tracker
-- a single-user MVP
-- optimized for daily manual entry
-- focused on clarity and speed over enterprise complexity
-
-It is not yet:
-
-- a multi-user SaaS product
-- an authenticated banking integration
-- a cloud-synced finance platform
-
-## Future Improvements
-
-- SQLite or PostgreSQL support
-- authentication and user profiles
+- move from JSON to SQLite/PostgreSQL
+- password reset flow
 - recurring transactions
-- budget goals by category
-- export to CSV or Excel
-- stronger AI assistant recommendations
+- category budgets
+- CSV export
+- richer AI advice and expense insights
+- optional API-first separation for frontend/backend deployment
 
 ## License
 
-This project currently has no explicit license file. Add one before publishing publicly if you want others to reuse or contribute to it.
+This repository currently does not include an explicit license file. Add one before wider public distribution if you want others to reuse or contribute to the code.
