@@ -8,6 +8,8 @@ The project is still intentionally lightweight: Flask on the backend, React on t
 
 - React-based frontend served by Flask
 - Session-based authentication with login and registration
+- Persistent login sessions until explicit logout
+- Forgot-password flow using registered email + secure password reset
 - Profile overview and account settings pages
 - Daily finance tracking with insights and yearly analysis
 - Day Editor with calendar-based past-date editing
@@ -107,6 +109,8 @@ The React app itself lives in:
 
 - Register and login flow
 - Session-based authentication
+- Persistent session login across browser restarts
+- Forgot password flow with email verification and password reset
 - Profile overview page
 - Account settings page
 - Editable user profile information
@@ -158,6 +162,8 @@ This approach keeps the project easy to run locally and simple to iterate on bef
 
 - serving the React app shell
 - authentication APIs
+- persistent session handling
+- forgot-password reset API
 - profile and settings APIs
 - finance entry CRUD APIs
 - metrics generation
@@ -214,6 +220,19 @@ Then open:
 ```text
 http://127.0.0.1:5000
 ```
+
+## Login Behavior
+
+DailyMoney now keeps the user logged in with a persistent Flask session.
+
+- you stay logged in after refreshing the page
+- you stay logged in after reopening the browser
+- you only need to log in again if you:
+  - click logout
+  - clear browser cookies
+  - let the session expire
+
+If you forget your password, use the `Forgot Password` option on the login page and reset it using the registered email address.
 
 ## Why No Database Yet?
 

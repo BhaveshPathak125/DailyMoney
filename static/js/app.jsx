@@ -1363,8 +1363,22 @@ function AuthLayout({ children }) {
   );
 }
 
-function LoginPage({ onLogin, goRegister }) {
+function LoginPage({ onLogin, onForgotPassword, onError, goRegister }) {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetForm, setResetForm] = useState({ email: "", newPassword: "", confirmPassword: "" });
+
+  const submitForgotPassword = async (event) => {
+    event.preventDefault();
+    if (resetForm.newPassword !== resetForm.confirmPassword) {
+      onError("Passwords do not match.");
+      return;
+    }
+    await onForgotPassword({ email: resetForm.email, newPassword: resetForm.newPassword });
+    setShowForgotPassword(false);
+    setResetForm({ email: "", newPassword: "", confirmPassword: "" });
+  };
+
   return (
     <AuthLayout>
       <div className="mx-auto max-w-xl">
@@ -1387,6 +1401,18 @@ function LoginPage({ onLogin, goRegister }) {
           >
             <input className="w-full rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 focus:border-primary-container focus:ring-0" placeholder="Email address" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
             <input className="w-full rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 focus:border-primary-container focus:ring-0" placeholder="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="text-xs font-semibold uppercase tracking-widest text-primary-container"
+                onClick={() => {
+                  setShowForgotPassword(true);
+                  setResetForm((current) => ({ ...current, email: form.email }));
+                }}
+              >
+                Forgot Password?
+              </button>
+            </div>
             <button className="interactive-surface w-full rounded-2xl bg-gradient-to-br from-primary to-primary-container py-4 font-bold font-headline text-on-primary">Log In</button>
           </form>
         </div>
@@ -1396,6 +1422,53 @@ function LoginPage({ onLogin, goRegister }) {
             Sign up
           </button>
         </p>
+
+        {showForgotPassword ? (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 px-4">
+            <div className="glass-card w-full max-w-md rounded-[2rem] border border-outline-variant/10 p-8">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold font-headline text-primary">Reset Password</h3>
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    Enter the registered email and set a new password.
+                  </p>
+                </div>
+                <button className="text-on-surface-variant" onClick={() => setShowForgotPassword(false)}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form
+                className="space-y-4"
+                onSubmit={submitForgotPassword}
+              >
+                <input
+                  className="w-full rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 focus:border-primary-container focus:ring-0"
+                  placeholder="Registered email"
+                  type="email"
+                  value={resetForm.email}
+                  onChange={(event) => setResetForm({ ...resetForm, email: event.target.value })}
+                />
+                <input
+                  className="w-full rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 focus:border-primary-container focus:ring-0"
+                  placeholder="New password"
+                  type="password"
+                  value={resetForm.newPassword}
+                  onChange={(event) => setResetForm({ ...resetForm, newPassword: event.target.value })}
+                />
+                <input
+                  className="w-full rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4 focus:border-primary-container focus:ring-0"
+                  placeholder="Confirm new password"
+                  type="password"
+                  value={resetForm.confirmPassword}
+                  onChange={(event) => setResetForm({ ...resetForm, confirmPassword: event.target.value })}
+                />
+                <button className="interactive-surface w-full rounded-2xl bg-gradient-to-br from-primary to-primary-container py-4 font-bold font-headline text-on-primary">
+                  Reset Password
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </div>
     </AuthLayout>
   );
@@ -1543,6 +1616,22 @@ function App() {
     }
   };
 
+  const handleForgotPassword = async (payload) => {
+    try {
+      const data = await apiJson("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({
+          email: payload.email,
+          new_password: payload.newPassword,
+        }),
+      });
+      showFlash(data.message || "Password reset successfully.");
+    } catch (error) {
+      showFlash(error.message, "error");
+      throw error;
+    }
+  };
+
   const mutateState = async (requestFactory, successMessage, forcedDate = null) => {
     try {
       const data = await requestFactory();
@@ -1613,7 +1702,12 @@ function App() {
         {path === "/register" ? (
           <RegisterPage onRegister={(payload) => handleAuth("/api/auth/register", payload)} goLogin={() => navigate("/login")} />
         ) : (
-          <LoginPage onLogin={(payload) => handleAuth("/api/auth/login", payload)} goRegister={() => navigate("/register")} />
+          <LoginPage
+            onLogin={(payload) => handleAuth("/api/auth/login", payload)}
+            onForgotPassword={handleForgotPassword}
+            onError={(message) => showFlash(message, "error")}
+            goRegister={() => navigate("/register")}
+          />
         )}
       </>
     );

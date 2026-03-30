@@ -77,6 +77,8 @@ TYPE_OPTIONS = ["expense", "income", "saving"]
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = SESSION_SECRET
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
 @dataclass
@@ -610,6 +612,13 @@ def shell_context() -> dict[str, Any]:
     return {"app_name": APP_NAME}
 
 
+@app.before_request
+def keep_session_active() -> None:
+    if session.get("user_id"):
+        session.permanent = True
+        session.modified = True
+
+
 @app.get("/api/auth/session")
 def api_auth_session():
     user = current_user_record()
@@ -636,6 +645,7 @@ def api_register():
     user = create_user(name, email, password, payload)
     save_users_payload(payload)
     session["user_id"] = user["id"]
+    session.permanent = True
     return jsonify({"ok": True, "user": public_user(user)})
 
 
@@ -651,7 +661,29 @@ def api_login():
         return json_error("Invalid email or password.", 401)
 
     session["user_id"] = user["id"]
+    session.permanent = True
     return jsonify({"ok": True, "user": public_user(user)})
+
+
+@app.post("/api/auth/forgot-password")
+def api_forgot_password():
+    payload = load_users_payload()
+    body = parse_json_body()
+    email = normalize_email(body.get("email", ""))
+    new_password = body.get("new_password", "")
+
+    if "@" not in email:
+        return json_error("Please enter a valid email address.")
+    if len(new_password) < 6:
+        return json_error("New password must be at least 6 characters.")
+
+    user = next((item for item in payload.get("users", []) if item.get("email") == email), None)
+    if not user:
+        return json_error("No account exists for this email.", 404)
+
+    user["password_hash"] = generate_password_hash(new_password)
+    save_users_payload(payload)
+    return jsonify({"ok": True, "message": "Password reset successfully. You can now log in with the new password."})
 
 
 @app.post("/api/auth/logout")
