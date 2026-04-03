@@ -11,6 +11,7 @@ const PROTECTED_ROUTES = new Set([
   "/day-editor",
   "/profile-overview",
   "/account-settings",
+  "/sms-automation",
 ]);
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
 const profileNavItems = [
   { path: "/profile-overview", label: "Profile", icon: "person" },
   { path: "/account-settings", label: "Settings", icon: "settings" },
+  { path: "/sms-automation", label: "SMS Automation", icon: "sms" },
 ];
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
@@ -144,14 +146,14 @@ function AnimatedStarsBackground() {
     let stars = [];
 
     const buildStars = () => {
-      const count = Math.max(45, Math.floor((width * height) / 26000));
+      const count = Math.max(24, Math.floor((width * height) / 52000));
       stars = Array.from({ length: count }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: Math.random() * 1.6 + 0.35,
-        alpha: Math.random() * 0.7 + 0.15,
-        speed: Math.random() * 0.18 + 0.03,
-        twinkle: Math.random() * 0.02 + 0.005,
+        radius: Math.random() * 1.2 + 0.28,
+        alpha: Math.random() * 0.45 + 0.08,
+        speed: Math.random() * 0.1 + 0.02,
+        twinkle: Math.random() * 0.012 + 0.003,
       }));
     };
 
@@ -181,8 +183,8 @@ function AnimatedStarsBackground() {
 
         context.beginPath();
         context.fillStyle = `rgba(239, 255, 227, ${star.alpha})`;
-        context.shadowBlur = 12;
-        context.shadowColor = "rgba(57, 255, 20, 0.15)";
+        context.shadowBlur = 6;
+        context.shadowColor = "rgba(57, 255, 20, 0.08)";
         context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         context.fill();
       });
@@ -272,6 +274,7 @@ function TopBar({ path, onToggle, user, onLogout }) {
     "/day-editor": "Day Editor",
     "/profile-overview": "Profile Overview",
     "/account-settings": "Account Settings",
+    "/sms-automation": "SMS Automation",
   };
 
   return (
@@ -536,7 +539,7 @@ function DashboardPage({ state }) {
   );
 }
 
-function DailyEntryPage({ state, onCreateEntry, onDeleteEntry, onClearEntries }) {
+function DailyEntryPage({ state, onCreateEntry, onDeleteEntry, onClearEntries, onPreviewSms, onImportSms }) {
   const categories = state.categories;
   const metrics = state.metrics;
   const [form, setForm] = useState({
@@ -548,6 +551,9 @@ function DailyEntryPage({ state, onCreateEntry, onDeleteEntry, onClearEntries })
     description: "",
     account: "",
   });
+  const [smsText, setSmsText] = useState("");
+  const [smsPreview, setSmsPreview] = useState(null);
+  const [smsLoading, setSmsLoading] = useState(false);
 
   const activeCategory = form.customCategory.trim() || form.category;
 
@@ -563,6 +569,24 @@ function DailyEntryPage({ state, onCreateEntry, onDeleteEntry, onClearEntries })
       description: "",
       account: "",
     });
+  };
+
+  const analyzeSms = async () => {
+    if (!smsText.trim()) return;
+    setSmsLoading(true);
+    try {
+      const preview = await onPreviewSms(smsText);
+      setSmsPreview(preview);
+    } finally {
+      setSmsLoading(false);
+    }
+  };
+
+  const importSms = async () => {
+    if (!smsText.trim()) return;
+    await onImportSms(smsText);
+    setSmsText("");
+    setSmsPreview(null);
   };
 
   return (
@@ -680,6 +704,68 @@ function DailyEntryPage({ state, onCreateEntry, onDeleteEntry, onClearEntries })
               Save Entry
             </button>
           </form>
+        </section>
+
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-container">SMS Import</p>
+            <h3 className="mt-2 text-2xl font-bold font-headline">Parse Bank SMS Into Entries</h3>
+            <p className="mt-2 text-sm text-on-surface-variant">
+              Paste a transaction SMS and DailyMoney will detect debit or credit, amount, account clue, and likely category.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <textarea
+              className="h-32 w-full rounded-2xl border-none bg-surface-container-lowest p-4 focus:ring-0"
+              placeholder="Example: Rs 10 debited for railway payment from IDFC Bank..."
+              value={smsText}
+              onChange={(event) => setSmsText(event.target.value)}
+            ></textarea>
+
+            <div className="flex flex-wrap gap-3">
+              <button className="interactive-surface rounded-2xl bg-surface-container-high px-4 py-3 text-sm font-bold text-primary" onClick={analyzeSms} disabled={smsLoading}>
+                {smsLoading ? "Analyzing..." : "Analyze SMS"}
+              </button>
+              {smsPreview ? (
+                <button className="interactive-surface rounded-2xl bg-primary-container/15 px-4 py-3 text-sm font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40" onClick={importSms} disabled={smsPreview.isDuplicate}>
+                  Import SMS Entry
+                </button>
+              ) : null}
+            </div>
+
+            {smsPreview ? (
+              <div className="rounded-2xl bg-surface-container-lowest p-5">
+                {smsPreview.isDuplicate ? (
+                  <div className="mb-4 rounded-2xl border border-error/20 bg-error/10 p-4 text-sm text-error">
+                    A very similar entry already exists for this date. Import is blocked to avoid duplicates.
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Amount</p>
+                    <p className="mt-1 font-bold">{formatMoney(smsPreview.amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Type</p>
+                    <p className="mt-1 font-bold capitalize">{smsPreview.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Category</p>
+                    <p className="mt-1 font-bold">{smsPreview.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Account</p>
+                    <p className="mt-1 font-bold">{smsPreview.account}</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-widest text-on-surface-variant">Description</p>
+                  <p className="mt-1 font-bold">{smsPreview.description}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </section>
 
         <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
@@ -890,7 +976,15 @@ function YearlyPage({ state }) {
         {
           label: "Inflow",
           data: series.map((item) => item.income),
-          backgroundColor: "rgba(57,255,20,0.55)",
+          backgroundColor: (context) => {
+            const { ctx, chartArea } = context.chart;
+            if (!chartArea) return "rgba(57,255,20,0.55)";
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, "rgba(239,255,227,0.95)");
+            gradient.addColorStop(0.4, "rgba(57,255,20,0.82)");
+            gradient.addColorStop(1, "rgba(57,255,20,0.16)");
+            return gradient;
+          },
           borderColor: "#79ff5b",
           borderRadius: 12,
           borderSkipped: false,
@@ -898,7 +992,15 @@ function YearlyPage({ state }) {
         {
           label: "Outflow",
           data: series.map((item) => item.expense),
-          backgroundColor: "rgba(255,180,171,0.45)",
+          backgroundColor: (context) => {
+            const { ctx, chartArea } = context.chart;
+            if (!chartArea) return "rgba(255,180,171,0.45)";
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, "rgba(255,218,214,0.92)");
+            gradient.addColorStop(0.45, "rgba(255,180,171,0.72)");
+            gradient.addColorStop(1, "rgba(255,180,171,0.14)");
+            return gradient;
+          },
           borderColor: "#ffdad6",
           borderRadius: 12,
           borderSkipped: false,
@@ -1236,6 +1338,7 @@ function ProfileOverviewPage({ state }) {
 
 function SettingsPage({ state, onSaveProfile, onSaveSettings }) {
   const { user, metrics } = state;
+  const smsAutomation = state.smsAutomation;
   const profile = user.profile || {};
   const preferences = user.preferences || {};
   const notifications = preferences.notifications || {};
@@ -1348,6 +1451,234 @@ function SettingsPage({ state, onSaveProfile, onSaveSettings }) {
         <StatCard label="Current Budget" value={formatMoney(metrics.monthly_budget)} accent="text-primary" />
         <StatCard label="Budget Used" value={formatPercent(metrics.budget_used)} accent="text-secondary" />
         <StatCard label="Income Target" value={formatMoney(metrics.monthly_income_target)} accent="text-primary" />
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary-container">SMS Automation</p>
+            <h3 className="mt-2 text-xl font-bold font-headline text-primary">Free Automation Setup</h3>
+            <p className="mt-2 text-sm text-on-surface-variant">
+              Keep manual entry and also auto-import bank SMS by forwarding messages from your Android phone to DailyMoney.
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-4 text-sm">
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="text-xs uppercase tracking-widest text-on-surface-variant">Webhook URL</p>
+              <p className="mt-2 break-all font-medium">{smsAutomation.webhookUrl}</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="text-xs uppercase tracking-widest text-on-surface-variant">Target User Email</p>
+              <p className="mt-2 font-medium">{smsAutomation.userEmail}</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="text-xs uppercase tracking-widest text-on-surface-variant">How To Run Free</p>
+              <div className="mt-2 space-y-2 text-on-surface-variant">
+                <p>1. Expose your local Flask app to the internet with a free tunnel.</p>
+                <p>2. Use an Android SMS forwarder app to forward bank SMS to the webhook URL above.</p>
+                <p>3. DailyMoney will parse amount, credit/debit type, category clue, and account clue automatically.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function SmsAutomationPage({ state, onPreviewSms, onImportSms, onError }) {
+  const smsAutomation = state.smsAutomation;
+  const [smsText, setSmsText] = useState("Rs 10 debited for railway payment from IDFC Bank on 2026-04-03");
+  const [smsPreview, setSmsPreview] = useState(null);
+  const [smsLoading, setSmsLoading] = useState(false);
+  const [copied, setCopied] = useState("");
+
+  const analyzeSms = async () => {
+    if (!smsText.trim()) return;
+    setSmsLoading(true);
+    try {
+      const preview = await onPreviewSms(smsText);
+      setSmsPreview(preview);
+    } finally {
+      setSmsLoading(false);
+    }
+  };
+
+  const importSms = async () => {
+    if (!smsText.trim()) return;
+    await onImportSms(smsText);
+    const preview = await onPreviewSms(smsText).catch(() => null);
+    setSmsPreview(preview);
+  };
+
+  const copyText = async (label, value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(label);
+      window.setTimeout(() => setCopied(""), 1800);
+    } catch (_error) {
+      onError("Could not copy automatically. Please copy it manually.");
+    }
+  };
+
+  return (
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 xl:grid-cols-12">
+      <div className="space-y-6 xl:col-span-7">
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6 md:p-8">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary-container">Automation Setup</p>
+            <h2 className="mt-2 text-3xl font-bold font-headline">Connect Your Phone SMS To DailyMoney</h2>
+            <p className="mt-3 text-sm text-on-surface-variant">
+              Keep manual entry and also auto-import bank SMS by forwarding them into DailyMoney. This page gives you the webhook, free-plan setup path, and a live parser test.
+            </p>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-widest text-on-surface-variant">Webhook URL</p>
+                  <p className="mt-2 break-all text-sm font-medium text-on-surface">{smsAutomation.webhookUrl}</p>
+                </div>
+                <button className="interactive-surface rounded-xl bg-surface-container-high px-3 py-2 text-xs font-bold text-primary" onClick={() => copyText("webhook", smsAutomation.webhookUrl)}>
+                  {copied === "webhook" ? "Copied" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-2xl bg-surface-container-lowest p-4">
+                <p className="text-xs uppercase tracking-widest text-on-surface-variant">Target User</p>
+                <p className="mt-2 text-sm font-medium">{smsAutomation.userEmail}</p>
+              </div>
+              <div className="rounded-2xl bg-surface-container-lowest p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Ingest Token</p>
+                    <p className="mt-2 text-sm font-medium break-all">{smsAutomation.token}</p>
+                  </div>
+                  <button className="interactive-surface rounded-xl bg-surface-container-high px-3 py-2 text-xs font-bold text-primary" onClick={() => copyText("token", smsAutomation.token)}>
+                    {copied === "token" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary-container">Dummy SMS Test</p>
+            <h3 className="mt-2 text-2xl font-bold font-headline">Test The Parser Before Connecting Your Phone</h3>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <textarea
+              className="h-36 w-full rounded-2xl border-none bg-surface-container-lowest p-4 focus:ring-0"
+              value={smsText}
+              onChange={(event) => setSmsText(event.target.value)}
+            ></textarea>
+
+            <div className="flex flex-wrap gap-3">
+              <button className="interactive-surface rounded-2xl bg-surface-container-high px-4 py-3 text-sm font-bold text-primary" onClick={analyzeSms} disabled={smsLoading}>
+                {smsLoading ? "Analyzing..." : "Analyze Dummy SMS"}
+              </button>
+              {smsPreview ? (
+                <button className="interactive-surface rounded-2xl bg-primary-container/15 px-4 py-3 text-sm font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40" onClick={importSms} disabled={smsPreview.isDuplicate}>
+                  Import As Real Entry
+                </button>
+              ) : null}
+            </div>
+
+            {smsPreview ? (
+              <div className="rounded-2xl bg-surface-container-lowest p-5">
+                {smsPreview.isDuplicate ? (
+                  <div className="mb-4 rounded-2xl border border-error/20 bg-error/10 p-4 text-sm text-error">
+                    This looks like a duplicate of an existing entry. Import is blocked to protect your ledger.
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Amount</p>
+                    <p className="mt-1 font-bold">{formatMoney(smsPreview.amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Type</p>
+                    <p className="mt-1 font-bold capitalize">{smsPreview.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Category</p>
+                    <p className="mt-1 font-bold">{smsPreview.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-on-surface-variant">Account</p>
+                    <p className="mt-1 font-bold">{smsPreview.account}</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-widest text-on-surface-variant">Description</p>
+                  <p className="mt-1 font-bold">{smsPreview.description}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
+
+      <div className="space-y-6 xl:col-span-5">
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary-container">What You Need</p>
+          <h3 className="mt-2 text-2xl font-bold font-headline">Free Tools Only</h3>
+          <div className="mt-5 space-y-4 text-sm text-on-surface-variant">
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">1. DailyMoney running locally</p>
+              <p className="mt-2">Keep `python app.py` running on your laptop or desktop.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">2. A free tunnel</p>
+              <p className="mt-2">Use a free tunnel like Cloudflare Tunnel so your local app gets a public HTTPS URL.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">3. An Android SMS forwarder</p>
+              <p className="mt-2">Use a free SMS forwarding app on Android to POST incoming bank SMS messages to the webhook URL above.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary-container">Your Steps</p>
+          <h3 className="mt-2 text-2xl font-bold font-headline">How To Connect It</h3>
+          <div className="mt-5 space-y-4 text-sm text-on-surface-variant">
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">Step 1</p>
+              <p className="mt-2">Run DailyMoney locally and confirm the website opens.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">Step 2</p>
+              <p className="mt-2">Create a free tunnel and replace the local host part in the webhook with the public HTTPS URL if needed.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">Step 3</p>
+              <p className="mt-2">Open your Android SMS forwarding app and set the forward target to the webhook URL shown above.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">Step 4</p>
+              <p className="mt-2">Send yourself a dummy test SMS first, then check DailyMoney for the imported entry.</p>
+            </div>
+            <div className="rounded-2xl bg-surface-container-lowest p-4">
+              <p className="font-semibold text-on-surface">Step 5</p>
+              <p className="mt-2">After that, your bank alerts can start flowing into the app automatically while manual entry still stays available.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="interactive-surface glass-card rounded-3xl border border-outline-variant/10 p-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary-container">Recommended Dummy SMS</p>
+          <div className="mt-3 rounded-2xl bg-surface-container-lowest p-4 text-sm text-on-surface">
+            Rs 10 debited for railway payment from IDFC Bank on 2026-04-03
+          </div>
+          <button className="interactive-surface mt-4 rounded-2xl bg-surface-container-high px-4 py-3 text-sm font-bold text-primary" onClick={() => setSmsText("Rs 10 debited for railway payment from IDFC Bank on 2026-04-03")}>
+            Load This Dummy SMS
+          </button>
+        </section>
       </div>
     </div>
   );
@@ -1661,6 +1992,31 @@ function App() {
     await mutateState(() => apiJson("/api/entries", { method: "POST", body: JSON.stringify(payload) }), "Entry saved.");
   };
 
+  const handlePreviewSms = async (message) => {
+    try {
+      const data = await apiJson("/api/sms/preview", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      });
+      showFlash("SMS analyzed successfully.");
+      return data.preview;
+    } catch (error) {
+      showFlash(error.message, "error");
+      throw error;
+    }
+  };
+
+  const handleImportSms = async (message) => {
+    await mutateState(
+      () =>
+        apiJson("/api/sms/import", {
+          method: "POST",
+          body: JSON.stringify({ message }),
+        }),
+      "SMS transaction imported."
+    );
+  };
+
   const handleUpdateEntry = async (entryId, payload) => {
     await mutateState(
       () => apiJson(`/api/entries/${entryId}`, { method: "PUT", body: JSON.stringify(payload) }),
@@ -1723,12 +2079,13 @@ function App() {
   }
 
   let page = <DashboardPage state={appState} />;
-  if (path === "/daily-entry") page = <DailyEntryPage state={appState} onCreateEntry={handleCreateEntry} onDeleteEntry={handleDeleteEntry} onClearEntries={handleClearEntries} />;
+  if (path === "/daily-entry") page = <DailyEntryPage state={appState} onCreateEntry={handleCreateEntry} onDeleteEntry={handleDeleteEntry} onClearEntries={handleClearEntries} onPreviewSms={handlePreviewSms} onImportSms={handleImportSms} />;
   if (path === "/monthly-insights") page = <InsightsPage state={appState} />;
   if (path === "/yearly-analysis") page = <YearlyPage state={appState} />;
   if (path === "/day-editor") page = <DayEditorPage state={appState} onSelectDate={handleSelectDate} onUpdateEntry={handleUpdateEntry} onDeleteEntry={handleDeleteEntry} />;
   if (path === "/profile-overview") page = <ProfileOverviewPage state={appState} />;
   if (path === "/account-settings") page = <SettingsPage state={appState} onSaveProfile={handleSaveProfile} onSaveSettings={handleSaveSettings} />;
+  if (path === "/sms-automation") page = <SmsAutomationPage state={appState} onPreviewSms={handlePreviewSms} onImportSms={handleImportSms} onError={(message) => showFlash(message, "error")} />;
 
   return (
     <div className="app-stage">
