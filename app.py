@@ -3,7 +3,6 @@ from __future__ import annotations
 import calendar
 import json
 import os
-import re
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
@@ -11,10 +10,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, Response, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
-
-from routes.sms import create_sms_blueprint
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,7 +22,6 @@ USERS_FILE = DATA_DIR / "users.json"
 DEFAULT_ACCOUNT_NAME = "Unassigned"
 APP_NAME = "DailyMoney"
 SESSION_SECRET = os.environ.get("DAILYMONEY_SECRET_KEY", "daily-money-dev-secret")
-SMS_INGEST_TOKEN = os.environ.get("DAILYMONEY_SMS_INGEST_TOKEN", "daily-money-sms-token")
 
 DEFAULT_FINANCE = {
     "settings": {
@@ -58,14 +54,10 @@ DEFAULT_USERS_PAYLOAD = {"users": []}
 CATEGORY_CONFIG = [
     ("Food", "restaurant"),
     ("Travel", "flight"),
-    ("Transport", "commute"),
     ("Savings", "savings"),
     ("Shopping", "shopping_bag"),
     ("Health", "fitness_center"),
     ("Bills", "receipt_long"),
-    ("Subscription", "subscriptions"),
-    ("Cash Withdrawal", "atm"),
-    ("Uncategorized", "help"),
     ("Income", "payments"),
     ("Other", "grid_view"),
 ]
@@ -73,44 +65,15 @@ CATEGORY_CONFIG = [
 CATEGORY_STYLES = {
     "Food": {"color": "#f59e0b", "soft": "rgba(245, 158, 11, 0.18)"},
     "Travel": {"color": "#38bdf8", "soft": "rgba(56, 189, 248, 0.18)"},
-    "Transport": {"color": "#60a5fa", "soft": "rgba(96, 165, 250, 0.18)"},
     "Savings": {"color": "#39ff14", "soft": "rgba(57, 255, 20, 0.18)"},
     "Shopping": {"color": "#fb7185", "soft": "rgba(251, 113, 133, 0.18)"},
     "Health": {"color": "#22c55e", "soft": "rgba(34, 197, 94, 0.18)"},
     "Bills": {"color": "#a78bfa", "soft": "rgba(167, 139, 250, 0.18)"},
-    "Subscription": {"color": "#f472b6", "soft": "rgba(244, 114, 182, 0.18)"},
-    "Cash Withdrawal": {"color": "#f97316", "soft": "rgba(249, 115, 22, 0.18)"},
-    "Uncategorized": {"color": "#94a3b8", "soft": "rgba(148, 163, 184, 0.18)"},
     "Income": {"color": "#14b8a6", "soft": "rgba(20, 184, 166, 0.18)"},
     "Other": {"color": "#94a3b8", "soft": "rgba(148, 163, 184, 0.18)"},
 }
 
 TYPE_OPTIONS = ["expense", "income", "saving"]
-
-SMS_DEBIT_HINTS = ["debited", "spent", "purchase", "paid", "payment", "withdrawn", "sent", "dr"]
-SMS_CREDIT_HINTS = ["credited", "received", "deposit", "refunded", "cr"]
-SMS_AMOUNT_PATTERNS = [
-    re.compile(r"(?:rs\.?|inr|mrp)\s*([0-9,]+(?:\.[0-9]{1,2})?)", re.IGNORECASE),
-    re.compile(r"([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr)", re.IGNORECASE),
-]
-SMS_CATEGORY_KEYWORDS = {
-    "Travel": ["railway", "irctc", "metro", "uber", "ola", "flight", "bus", "train", "rapido", "fuel", "petrol"],
-    "Food": ["zomato", "swiggy", "restaurant", "cafe", "juice", "food", "breakfast", "lunch", "dinner"],
-    "Shopping": ["amazon", "flipkart", "myntra", "shopping", "store", "mart", "mall"],
-    "Bills": ["electricity", "water", "gas", "broadband", "recharge", "bill", "rent", "subscription"],
-    "Health": ["pharmacy", "hospital", "clinic", "health", "medicine", "apollo", "medplus"],
-    "Savings": ["deposit", "fd", "sip", "mutual fund", "saving", "investment"],
-}
-BANK_KEYWORDS = {
-    "hdfc": "HDFC",
-    "icici": "ICICI",
-    "sbi": "SBI",
-    "axis": "Axis",
-    "kotak": "Kotak",
-    "idfc": "IDFC",
-    "yes bank": "YES BANK",
-    "federal": "Federal Bank",
-}
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = SESSION_SECRET
@@ -127,10 +90,6 @@ class Entry:
     description: str
     account: str
     amount: float
-    source: str | None = None
-    sms_timestamp: str | None = None
-    sender: str | None = None
-    raw_message: str | None = None
 
     @property
     def signed_amount(self) -> float:
@@ -230,121 +189,6 @@ def money(value: float) -> str:
     return f"₹{format_indian_number(value)}"
 
 
-def extract_sms_amount(message: str) -> float | None:
-    for pattern in SMS_AMOUNT_PATTERNS:
-        match = pattern.search(message)
-        if match:
-            try:
-                return abs(float(match.group(1).replace(",", "")))
-            except ValueError:
-                return None
-    return None
-
-
-def detect_sms_transaction_type(message: str) -> str | None:
-    lowered = message.lower()
-    if any(token in lowered for token in SMS_DEBIT_HINTS):
-        return "expense"
-    if any(token in lowered for token in SMS_CREDIT_HINTS):
-        return "income"
-    return None
-
-
-def clean_merchant_name(value: str) -> str:
-    cleaned = re.split(r"\b(?:on|via|using|from|avl|bal|info|ref|utr)\b", value, maxsplit=1, flags=re.IGNORECASE)[0]
-    cleaned = re.sub(r"[^A-Za-z0-9&./\- ]+", " ", cleaned)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,-")
-    return cleaned[:60].strip() or "SMS Import"
-
-
-def extract_sms_merchant(message: str) -> str:
-    patterns = [
-        r"(?:to|at|for|towards|via)\s+([A-Za-z0-9&./\- ]{2,60})",
-        r"(?:merchant|payee)[:\- ]+([A-Za-z0-9&./\- ]{2,60})",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, message, flags=re.IGNORECASE)
-        if match:
-            merchant = clean_merchant_name(match.group(1))
-            if merchant:
-                return merchant.title()
-    return "SMS Import"
-
-
-def infer_sms_category(message: str, merchant: str) -> str:
-    combined = f"{message} {merchant}".lower()
-    for category, keywords in SMS_CATEGORY_KEYWORDS.items():
-        if any(keyword in combined for keyword in keywords):
-            return category
-    return "Other"
-
-
-def infer_sms_account(message: str, user: dict[str, Any]) -> str:
-    lowered = message.lower()
-    finance = finance_from_user(user)
-    for account in finance.get("accounts", []):
-        account_name = account.get("name", "")
-        if account_name and account_name.lower() in lowered:
-            return account_name
-    for keyword, bank_name in BANK_KEYWORDS.items():
-        if keyword in lowered:
-            return bank_name
-    return DEFAULT_ACCOUNT_NAME
-
-
-def parse_sms_transaction(message: str, user: dict[str, Any]) -> dict[str, Any]:
-    raw_message = (message or "").strip()
-    if not raw_message:
-        return {"ok": False, "reason": "SMS message is empty."}
-
-    amount = extract_sms_amount(raw_message)
-    if amount is None:
-        return {"ok": False, "reason": "Could not detect the transaction amount from this SMS."}
-
-    transaction_type = detect_sms_transaction_type(raw_message)
-    if not transaction_type:
-        return {"ok": False, "reason": "Could not determine whether this SMS is a credit or debit transaction."}
-
-    merchant = extract_sms_merchant(raw_message)
-    category = infer_sms_category(raw_message, merchant)
-    account = infer_sms_account(raw_message, user)
-
-    return {
-        "ok": True,
-        "amount": round(amount, 2),
-        "type": transaction_type,
-        "description": merchant,
-        "category": category,
-        "account": account,
-        "date": date.today().isoformat(),
-        "rawMessage": raw_message,
-    }
-
-
-def find_duplicate_entry(
-    finance: dict[str, Any],
-    *,
-    entry_date: str,
-    entry_type: str,
-    amount: float,
-    description: str,
-    account: str,
-) -> dict[str, Any] | None:
-    normalized_description = description.strip().lower()
-    normalized_account = account.strip().lower()
-    for entry in finance.get("entries", []):
-        if entry.get("date") != entry_date:
-            continue
-        if entry.get("type") != entry_type:
-            continue
-        if abs(float(entry.get("amount", 0)) - float(amount)) > 0.009:
-            continue
-        if (entry.get("description", "").strip().lower() == normalized_description and
-                (entry.get("account", "").strip().lower() or DEFAULT_ACCOUNT_NAME.lower()) == (normalized_account or DEFAULT_ACCOUNT_NAME.lower())):
-            return entry
-    return None
-
-
 def sanitize_entry_date(raw_value: str | None) -> str:
     today_value = date.today()
     if not raw_value:
@@ -378,9 +222,6 @@ def serialize_entry(entry: Entry) -> dict[str, Any]:
         "amount": entry.amount,
         "displayAmount": entry.display_amount,
         "signedAmount": round(entry.signed_amount, 2),
-        "source": entry.source,
-        "smsTimestamp": entry.sms_timestamp,
-        "sender": entry.sender,
     }
 
 
@@ -711,12 +552,6 @@ def current_user_record(payload: dict[str, Any] | None = None) -> dict[str, Any]
     return None
 
 
-def user_by_email(email: str, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
-    payload = payload or load_users_payload()
-    normalized = normalize_email(email)
-    return next((user for user in payload.get("users", []) if user.get("email") == normalized), None)
-
-
 def require_user(payload: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     payload = payload or load_users_payload()
     user = current_user_record(payload)
@@ -729,7 +564,6 @@ def build_app_state(user: dict[str, Any], edit_date: str | None = None) -> dict[
     finance = finance_from_user(user)
     metrics = calculate_metrics(finance)
     safe_date = sanitize_entry_date(edit_date)
-    base_url = request.host_url.rstrip("/")
     return {
         "appName": APP_NAME,
         "user": public_user(user),
@@ -744,13 +578,6 @@ def build_app_state(user: dict[str, Any], edit_date: str | None = None) -> dict[
         ],
         "typeOptions": TYPE_OPTIONS,
         "dayEditor": build_day_editor_payload(metrics, safe_date),
-        "smsAutomation": {
-            "webhookUrl": f"{base_url}/sms-webhook?token={SMS_INGEST_TOKEN}&user_email={user['email']}",
-            "previewEndpoint": f"{base_url}/api/sms/preview",
-            "importEndpoint": f"{base_url}/api/sms/import",
-            "token": SMS_INGEST_TOKEN,
-            "userEmail": user["email"],
-        },
     }
 
 
@@ -778,19 +605,6 @@ def json_error(message: str, status: int = 400):
 
 def parse_json_body() -> dict[str, Any]:
     return request.get_json(silent=True) or {}
-
-
-app.register_blueprint(
-    create_sms_blueprint(
-        load_users_payload=load_users_payload,
-        save_users_payload=save_users_payload,
-        finance_from_user=finance_from_user,
-        rebuild_accounts_from_entries=rebuild_accounts_from_entries,
-        user_by_email=user_by_email,
-        json_error=json_error,
-        sms_ingest_token=SMS_INGEST_TOKEN,
-    )
-)
 
 
 @app.context_processor
@@ -876,76 +690,6 @@ def api_forgot_password():
 def api_logout():
     session.clear()
     return jsonify({"ok": True})
-
-
-@app.post("/api/sms/preview")
-def api_sms_preview():
-    user, _payload = require_user()
-    if not user:
-        return json_error("Authentication required.", 401)
-
-    body = parse_json_body()
-    preview = parse_sms_transaction(body.get("message", ""), user)
-    if not preview.get("ok"):
-        return json_error(preview["reason"])
-    finance = finance_from_user(user)
-    preview["isDuplicate"] = bool(
-        find_duplicate_entry(
-            finance,
-            entry_date=preview["date"],
-            entry_type=preview["type"],
-            amount=preview["amount"],
-            description=preview["description"],
-            account=preview["account"],
-        )
-    )
-    return jsonify({"ok": True, "preview": preview})
-
-
-@app.post("/api/sms/import")
-def api_sms_import():
-    user, payload = require_user()
-    if not user:
-        return json_error("Authentication required.", 401)
-
-    body = parse_json_body()
-    parsed = parse_sms_transaction(body.get("message", ""), user)
-    if not parsed.get("ok"):
-        return json_error(parsed["reason"])
-
-    finance = finance_from_user(user)
-    next_id = max((entry.get("id", 0) for entry in finance.get("entries", [])), default=0) + 1
-    entry_date = sanitize_entry_date(body.get("date") or parsed["date"])
-    account_name = body.get("accountOverride", "").strip() or parsed["account"] or DEFAULT_ACCOUNT_NAME
-    category_name = body.get("categoryOverride", "").strip() or parsed["category"]
-    description = body.get("descriptionOverride", "").strip() or parsed["description"]
-    allow_duplicate = bool(body.get("allowDuplicate", False))
-
-    existing = find_duplicate_entry(
-        finance,
-        entry_date=entry_date,
-        entry_type=parsed["type"],
-        amount=parsed["amount"],
-        description=description,
-        account=account_name,
-    )
-    if existing and not allow_duplicate:
-        return json_error("A very similar SMS entry already exists for this date. Import cancelled to prevent duplicates.", 409)
-
-    finance.setdefault("entries", []).append(
-        {
-            "id": next_id,
-            "date": entry_date,
-            "type": parsed["type"],
-            "category": category_name,
-            "description": description,
-            "account": account_name,
-            "amount": parsed["amount"],
-        }
-    )
-    rebuild_accounts_from_entries(finance)
-    save_users_payload(payload)
-    return jsonify({"ok": True, "parsed": parsed, "state": build_app_state(user, entry_date)})
 
 
 @app.get("/api/app-state")
@@ -1126,7 +870,6 @@ def api_update_settings():
 @app.get("/day-editor")
 @app.get("/profile-overview")
 @app.get("/account-settings")
-@app.get("/sms-automation")
 @app.get("/login")
 @app.get("/register")
 def react_app():
